@@ -17,6 +17,9 @@ with open("models/linear_regression.pkl", "rb") as f:
 with open("models/logistic_regression.pkl", "rb") as f:
     model2 = pickle.load(f)
 
+with open("models/decision_tree.pkl", "rb") as f:
+    decision_tree_model = pickle.load(f)
+
 
 # =========================
 # REQUEST SCHEMA
@@ -93,5 +96,26 @@ def predict_logistic_regression(data: PredictionInput):
 
     return {
         "model": "Logistic Regression",
+        "prediction": int(prediction)
+    }
+
+
+# =========================
+# DECISION TREE
+# =========================
+@app.post("/predict/decision_tree")
+def predict_decision_tree(data: PredictionInput):
+
+    features = np.array(data.features).reshape(1, -1)
+
+    if features.shape[1] != decision_tree_model.n_features_in_:
+        return {
+            "error": f"Expected {decision_tree_model.n_features_in_} features, got {features.shape[1]}"
+        }
+
+    prediction = decision_tree_model.predict(features)[0]
+
+    return {
+        "model": "Decision Tree",
         "prediction": int(prediction)
     }
