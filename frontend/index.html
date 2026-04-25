@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EconAI — Economic Growth Analyzer</title>
+  <meta name="description" content="ML-powered economic analysis and GDP prediction platform for countries of the world." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ===== NAVIGATION BAR ===== -->
+  <header class="navbar" id="navbar" role="banner">
+    <nav class="navbar__inner" aria-label="Main navigation">
+
+      <!-- Logo -->
+      <a href="#dashboard" class="navbar__logo" aria-label="EconAI Home">
+        <div class="navbar__logo-icon" aria-hidden="true">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Globe outline -->
+            <circle cx="16" cy="16" r="13" stroke="url(#globeGrad)" stroke-width="1.8" fill="none"/>
+            <!-- Latitude lines -->
+            <ellipse cx="16" cy="16" rx="6" ry="13" stroke="url(#globeGrad)" stroke-width="1.2" fill="none" opacity="0.6"/>
+            <line x1="3" y1="16" x2="29" y2="16" stroke="url(#globeGrad)" stroke-width="1.2" opacity="0.5"/>
+            <line x1="5.5" y1="10" x2="26.5" y2="10" stroke="url(#globeGrad)" stroke-width="1" opacity="0.4"/>
+            <line x1="5.5" y1="22" x2="26.5" y2="22" stroke="url(#globeGrad)" stroke-width="1" opacity="0.4"/>
+            <!-- Chart bars overlaid -->
+            <rect x="9" y="19" width="3" height="5" rx="1" fill="url(#barGrad)" opacity="0.9"/>
+            <rect x="14" y="15" width="3" height="9" rx="1" fill="url(#barGrad)" opacity="0.9"/>
+            <rect x="19" y="11" width="3" height="13" rx="1" fill="url(#barGrad)" opacity="0.9"/>
+            <defs>
+              <linearGradient id="globeGrad" x1="3" y1="3" x2="29" y2="29" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#3b82f6"/>
+                <stop offset="100%" stop-color="#06b6d4"/>
+              </linearGradient>
+              <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+                <stop offset="0%" stop-color="#06b6d4"/>
+                <stop offset="100%" stop-color="#3b82f6"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <span class="navbar__logo-text">Econ<span class="navbar__logo-accent">AI</span></span>
+      </a>
+
+      <!-- Desktop Nav Links -->
+      <ul class="navbar__links" role="list" id="navLinks">
+        <li><a href="#dashboard"   class="navbar__link navbar__link--active" id="nav-dashboard">Dashboard</a></li>
+        <li><a href="#predict-gdp" class="navbar__link" id="nav-predict">Predict GDP</a></li>
+        <li><a href="#classify"    class="navbar__link" id="nav-classify">Classify Country</a></li>
+        <li><a href="#insights"    class="navbar__link" id="nav-insights">Model Insights</a></li>
+      </ul>
+
+      <!-- CTA Button -->
+      <a href="#predict-gdp" class="navbar__cta" id="navbarCta">
+        Try Predictor
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+
+      <!-- Hamburger (mobile) -->
+      <button class="navbar__hamburger" id="hamburger" aria-label="Toggle mobile menu" aria-expanded="false" aria-controls="navLinks">
+        <span class="hamburger__bar"></span>
+        <span class="hamburger__bar"></span>
+        <span class="hamburger__bar"></span>
+      </button>
+
+    </nav>
+  </header>
+
+  <!-- ===== PLACEHOLDER SECTIONS (to be built next) ===== -->
+  <main>
+    <section id="dashboard"   class="placeholder-section">
+      <h1>Dashboard</h1><p>Coming soon…</p>
+    </section>
+    <section id="predict-gdp" class="placeholder-section">
+      <h2>Predict GDP</h2><p>Coming soon…</p>
+    </section>
+    <section id="classify"    class="placeholder-section">
+      <h2>Classify Country</h2><p>Coming soon…</p>
+    </section>
+    <section id="insights"    class="placeholder-section">
+      <h2>Model Insights</h2><p>Coming soon…</p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
