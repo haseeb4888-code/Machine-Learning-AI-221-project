@@ -12,7 +12,9 @@
 </head>
 <body>
 
-  <!-- ===== NAVIGATION BAR ===== -->
+  <!-- ===================================================
+       NAVBAR
+       =================================================== -->
   <header class="navbar" id="navbar" role="banner">
     <nav class="navbar__inner" aria-label="Main navigation">
 
@@ -20,24 +22,21 @@
       <a href="#dashboard" class="navbar__logo" aria-label="EconAI Home">
         <div class="navbar__logo-icon" aria-hidden="true">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- Globe outline -->
             <circle cx="16" cy="16" r="13" stroke="url(#globeGrad)" stroke-width="1.8" fill="none"/>
-            <!-- Latitude lines -->
             <ellipse cx="16" cy="16" rx="6" ry="13" stroke="url(#globeGrad)" stroke-width="1.2" fill="none" opacity="0.6"/>
             <line x1="3" y1="16" x2="29" y2="16" stroke="url(#globeGrad)" stroke-width="1.2" opacity="0.5"/>
             <line x1="5.5" y1="10" x2="26.5" y2="10" stroke="url(#globeGrad)" stroke-width="1" opacity="0.4"/>
             <line x1="5.5" y1="22" x2="26.5" y2="22" stroke="url(#globeGrad)" stroke-width="1" opacity="0.4"/>
-            <!-- Chart bars overlaid -->
-            <rect x="9" y="19" width="3" height="5" rx="1" fill="url(#barGrad)" opacity="0.9"/>
-            <rect x="14" y="15" width="3" height="9" rx="1" fill="url(#barGrad)" opacity="0.9"/>
+            <rect x="9"  y="19" width="3" height="5"  rx="1" fill="url(#barGrad)" opacity="0.9"/>
+            <rect x="14" y="15" width="3" height="9"  rx="1" fill="url(#barGrad)" opacity="0.9"/>
             <rect x="19" y="11" width="3" height="13" rx="1" fill="url(#barGrad)" opacity="0.9"/>
             <defs>
               <linearGradient id="globeGrad" x1="3" y1="3" x2="29" y2="29" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#3b82f6"/>
+                <stop offset="0%"   stop-color="#3b82f6"/>
                 <stop offset="100%" stop-color="#06b6d4"/>
               </linearGradient>
               <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
-                <stop offset="0%" stop-color="#06b6d4"/>
+                <stop offset="0%"   stop-color="#06b6d4"/>
                 <stop offset="100%" stop-color="#3b82f6"/>
               </linearGradient>
             </defs>
@@ -46,7 +45,7 @@
         <span class="navbar__logo-text">Econ<span class="navbar__logo-accent">AI</span></span>
       </a>
 
-      <!-- Desktop Nav Links -->
+      <!-- Desktop nav links — IDs match app.js section map -->
       <ul class="navbar__links" role="list" id="navLinks">
         <li><a href="#dashboard"   class="navbar__link navbar__link--active" id="nav-dashboard">Dashboard</a></li>
         <li><a href="#predict-gdp" class="navbar__link" id="nav-predict">Predict GDP</a></li>
@@ -54,16 +53,20 @@
         <li><a href="#insights"    class="navbar__link" id="nav-insights">Model Insights</a></li>
       </ul>
 
-      <!-- CTA Button -->
+      <!-- CTA button -->
       <a href="#predict-gdp" class="navbar__cta" id="navbarCta">
         Try Predictor
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-          <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </a>
 
-      <!-- Hamburger (mobile) -->
-      <button class="navbar__hamburger" id="hamburger" aria-label="Toggle mobile menu" aria-expanded="false" aria-controls="navLinks">
+      <!-- Hamburger (mobile) — controlled by app.js -->
+      <button class="navbar__hamburger" id="hamburger"
+              aria-label="Toggle mobile menu"
+              aria-expanded="false"
+              aria-controls="navLinks">
         <span class="hamburger__bar"></span>
         <span class="hamburger__bar"></span>
         <span class="hamburger__bar"></span>
@@ -72,20 +75,162 @@
     </nav>
   </header>
 
-  <!-- ===== PLACEHOLDER SECTIONS (to be built next) ===== -->
   <main>
-    <section id="dashboard"   class="placeholder-section">
-      <h1>Dashboard</h1><p>Coming soon…</p>
-    </section>
+
+    <!-- ===================================================
+         SECTION 1 — HERO / DASHBOARD
+         id="dashboard" ← matched by navbar link + JS observer
+         =================================================== -->
+    <section id="dashboard" class="hero" aria-label="Hero — Economic Growth Analyzer">
+
+      <!-- Canvas: app.js draws the particle network here.
+           position:absolute + inset:0 in CSS covers the whole section. -->
+      <canvas id="heroCanvas" class="hero__canvas" aria-hidden="true"></canvas>
+
+      <!-- Glow orbs: two blurred <div>s that slowly drift (CSS animation).
+           They give depth without needing any images. -->
+      <div class="hero__orb hero__orb--blue" aria-hidden="true"></div>
+      <div class="hero__orb hero__orb--teal"  aria-hidden="true"></div>
+
+      <!-- ── Text + CTA block ── -->
+      <div class="hero__content">
+
+        <!-- Pill badge: the pulsing dot signals "live / active" -->
+        <div class="hero__badge">
+          <span class="hero__badge-dot" aria-hidden="true"></span>
+          ML-Powered &nbsp;·&nbsp; Live Predictions
+        </div>
+
+        <!-- h1: clamp(2rem, 5vw, 3.5rem) scales font fluidly.
+             .hero__title-gradient uses background-clip:text for the gradient effect. -->
+        <h1 class="hero__title">
+          Predict a Country's<br />
+          <span class="hero__title-gradient">Economic Future</span><br />
+          with Machine Learning
+        </h1>
+
+        <p class="hero__subtitle">
+          Analyze <strong>195 countries</strong> using advanced regression &amp;
+          classification models. Input socioeconomic indicators and receive
+          instant GDP predictions.
+        </p>
+
+        <!-- Two buttons: primary (filled gradient) + secondary (glass/ghost) -->
+        <div class="hero__actions">
+          <a href="#predict-gdp" class="btn btn--primary" id="heroPredictBtn">
+            Predict GDP
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <a href="#classify" class="btn btn--secondary" id="heroClassifyBtn">
+            Classify Country
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M2 4h12M2 8h8M2 12h5" stroke="currentColor" stroke-width="1.8"
+                    stroke-linecap="round"/>
+            </svg>
+          </a>
+        </div>
+
+      </div><!-- /hero__content -->
+
+      <!-- ── Stat cards ──
+           id="heroStats" ← IntersectionObserver in app.js watches this.
+           data-target   ← the final number the count-up animates to.
+           data-suffix   ← appended after the number  (e.g. "%").
+           data-prefix   ← prepended before the number (e.g. "0." for R²). -->
+      <div class="hero__stats" id="heroStats">
+
+        <!-- Card 1: Countries -->
+        <div class="stat-card" id="statCountries">
+          <div class="stat-card__icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9"  stroke="url(#sg1)" stroke-width="1.5"/>
+              <ellipse cx="12" cy="12" rx="4" ry="9" stroke="url(#sg1)" stroke-width="1.2" opacity="0.6"/>
+              <line x1="3" y1="12" x2="21" y2="12" stroke="url(#sg1)" stroke-width="1.2" opacity="0.5"/>
+              <defs>
+                <linearGradient id="sg1" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#3b82f6"/><stop offset="1" stop-color="#06b6d4"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="stat-card__value">
+            <span class="stat-card__number" data-target="195" data-suffix="">0</span>
+          </div>
+          <div class="stat-card__label">Countries Analyzed</div>
+        </div>
+
+        <!-- Card 2: Accuracy (featured = slightly highlighted) -->
+        <div class="stat-card stat-card--featured" id="statAccuracy">
+          <div class="stat-card__icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="url(#sg2)" stroke-width="1.5"/>
+              <circle cx="12" cy="12" r="5" stroke="url(#sg2)" stroke-width="1.5"/>
+              <circle cx="12" cy="12" r="2" fill="url(#sg2)"/>
+              <defs>
+                <linearGradient id="sg2" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#3b82f6"/><stop offset="1" stop-color="#06b6d4"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="stat-card__value">
+            <span class="stat-card__number" data-target="82" data-suffix="%">0</span>
+          </div>
+          <div class="stat-card__label">Classification Accuracy</div>
+        </div>
+
+        <!-- Card 3: R² score.
+             data-prefix="0." + data-target="78" → displays as "0.78" -->
+        <div class="stat-card" id="statR2">
+          <div class="stat-card__icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <path d="M3 18l5-5 4 3 5-6 4 2" stroke="url(#sg3)" stroke-width="1.8"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+              <defs>
+                <linearGradient id="sg3" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#3b82f6"/><stop offset="1" stop-color="#06b6d4"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="stat-card__value">
+            <span class="stat-card__number" data-target="78" data-prefix="0." data-suffix="">0</span>
+          </div>
+          <div class="stat-card__label">R² Score (Regression)</div>
+        </div>
+
+      </div><!-- /hero__stats -->
+
+      <!-- Scroll hint: mouse-widget + label pinned to bottom of hero -->
+      <div class="hero__scroll-hint" aria-hidden="true">
+        <div class="hero__scroll-dot"></div>
+        <span>Scroll to explore</span>
+      </div>
+
+    </section><!-- /hero #dashboard -->
+
+
+    <!-- ===================================================
+         REMAINING SECTIONS — placeholders until built
+         =================================================== -->
     <section id="predict-gdp" class="placeholder-section">
-      <h2>Predict GDP</h2><p>Coming soon…</p>
+      <h2>Predict GDP</h2>
+      <p>Coming soon…</p>
     </section>
-    <section id="classify"    class="placeholder-section">
-      <h2>Classify Country</h2><p>Coming soon…</p>
+
+    <section id="classify" class="placeholder-section">
+      <h2>Classify Country</h2>
+      <p>Coming soon…</p>
     </section>
-    <section id="insights"    class="placeholder-section">
-      <h2>Model Insights</h2><p>Coming soon…</p>
+
+    <section id="insights" class="placeholder-section">
+      <h2>Model Insights</h2>
+      <p>Coming soon…</p>
     </section>
+
   </main>
 
   <script src="app.js"></script>
