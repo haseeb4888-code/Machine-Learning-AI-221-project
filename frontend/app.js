@@ -391,3 +391,171 @@
   io.observe(statsContainer);
 
 })();
+
+
+/* ============================================================
+   GDP PREDICTOR — Form submit → API → Result card
+   ============================================================ */
+(function () {
+  'use strict';
+
+  /* ── Element references ─────────────────────────────────── */
+  const form          = document.getElementById('gdpForm');
+  const submitBtn     = document.getElementById('gdpSubmitBtn');
+  const errorEl       = document.getElementById('gdpFormError');
+  const resultCard    = document.getElementById('gdpResult');
+  const resultValue   = document.getElementById('gdpResultValue');
+  const confidenceFill= document.getElementById('gdpConfidenceFill');
+  const confidencePct = document.getElementById('gdpConfidencePct');
+  const modelUsed     = document.getElementById('gdpModelUsed');
+
+  if (!form) return;   // guard: section not in DOM yet
+
+  /* API base URL — change to your deployed URL in production */
+  const API_BASE = 'http://localhost:8000';
+
+  /* ── Field names expected by the FastAPI /predict/gdp endpoint ── */
+  const FIELD_NAMES = [
+    'population', 'area', 'pop_density', 'coastline',
+    'net_migration', 'infant_mortality', 'literacy',
+    'phones_per_1000', 'arable', 'crops', 'other',
+    'climate', 'birthrate', 'deathrate',
+    'agriculture', 'industry', 'service'
+  ];
+
+  /* ── Helpers ────────────────────────────────────────────── */
+
+  /* Read all form fields and return a plain object.
+     Returns null if any required field is empty/invalid. */
+  function collectFormData() {
+    const data = {};
+    let valid = true;
+
+    FIELD_NAMES.forEach(name => {
+      const el  = document.getElementById(name);
+      const val = el ? parseFloat(el.value) : NaN;
+
+      if (el) el.classList.remove('is-invalid');
+
+      if (isNaN(val) || el.value.trim() === '') {
+        if (el) el.classList.add('is-invalid');
+        valid = false;
+      } else {
+        data[name] = val;
+      }
+    });
+
+    return valid ? data : null;
+  }
+
+  /* Format a number as USD currency string, e.g. 12450 → "$12,450" */
+  function formatUSD(value) {
+    return '$' + Math.round(value).toLocaleString('en-US');
+  }
+
+  /* Set the submit button into loading / normal state */
+  function setLoading(isLoading) {
+    if (isLoading) {
+      submitBtn.classList.add('is-loading');
+      submitBtn.querySelector('.btn-label').textContent = 'Predicting…';
+    } else {
+      submitBtn.classList.remove('is-loading');
+      submitBtn.querySelector('.btn-label').textContent = 'Predict GDP';
+    }
+  }
+
+  /* Show an error message below the form */
+  function showError(msg) {
+    errorEl.textContent = msg;
+  }
+
+  function clearError() {
+    errorEl.textContent = '';
+  }
+
+  /* Reveal the result card with the slide-up animation.
+     `hidden` attribute keeps it out of layout; removing it
+     lets the CSS opacity/transform transition play.          */
+  function showResult(prediction, confidence, model) {
+    /* 1. Write the values */
+    resultValue.textContent  = formatUSD(prediction) + ' per capita';
+    confidencePct.textContent = Math.round(confidence * 100) + '%';
+    modelUsed.textContent    = 'Model used: ' + model;
+
+    /* 2. Remove hidden so the card enters the layout */
+    resultCard.removeAttribute('hidden');
+
+    /* 3. Tiny delay lets the browser register the element before
+          transitioning (avoids the "no-transition on first render" bug) */
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        resultCard.classList.add('is-visible');
+        /* Animate confidence bar width */
+        confidenceFill.style.width = Math.round(confidence * 100) + '%';
+      });
+    });
+
+    /* 4. Scroll smoothly to the result card */
+    setTimeout(() => {
+      const navbar = document.getElementById('navbar');
+      const offset = (navbar ? navbar.offsetHeight : 68) + 16;
+      const top    = resultCard.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }, 100);
+  }
+
+  /* Hide and reset the result card (e.g. on a new submission) */
+  function hideResult() {
+    resultCard.classList.remove('is-visible');
+    confidenceFill.style.width = '0%';
+    setTimeout(() => resultCard.setAttribute('hidden', ''), 400);
+  }
+
+  /* ── Main: form submit handler ──────────────────────────── */
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearError();
+    hideResult();
+
+    /* Validate */
+    const data = collectFormData();
+    if (!data) {
+      showError('Please fill in all fields with valid numbers.');
+      return;
+    }
+
+    /* Show loading state */
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE}/predict/gdp`, {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || `Server error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      /* FastAPI returns: { predicted_value, confidence, model_used, input_features } */
+      showResult(result.predicted_value, result.confidence, result.model_used);
+
+    } catch (err) {
+      /* Network error or API down — show a friendly message */
+      showError('Could not reach the API. Is the FastAPI server running on port 8000?');
+      console.error('[GDP Predictor]', err);
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  /* Clear .is-invalid highlight as soon as the user starts typing */
+  FIELD_NAMES.forEach(name => {
+    const el = document.getElementById(name);
+    if (el) el.addEventListener('input', () => el.classList.remove('is-invalid'));
+  });
+
+})();

@@ -855,3 +855,304 @@ button {
   .hero__actions { flex-direction: column; width: 100%; }
   .btn { width: 100%; justify-content: center; }
 }
+
+/* ============================================================
+   SHARED SECTION STYLES
+   (used by predictor, classifier, insights sections)
+   ============================================================ */
+
+/* Outer section wrapper */
+.predictor-section,
+.classifier-section,
+.insights-section {
+  padding: var(--space-24) var(--space-6);
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+/* Section header block */
+.section-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* Small coloured tag above the title */
+.section-tag {
+  display: inline-block;
+  padding: var(--space-1) var(--space-4);
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-blue-light);
+}
+
+.section-title {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--color-text);
+}
+
+.section-subtitle {
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+  max-width: 560px;
+  line-height: 1.7;
+}
+
+/* ============================================================
+   PREDICTOR FORM CARD
+   ============================================================ */
+
+/* Glass card that wraps the form */
+.predictor-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-10);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+/* ── Two-column input grid ─────────────────────────────── */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6) var(--space-10);
+}
+
+/* Each column is a vertical stack of form groups */
+.form-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* ── Three-column row (Agriculture / Industry / Service) ── */
+.form-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ── Individual form group (label + input) ─────────────── */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.form-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  letter-spacing: 0.01em;
+}
+
+/* Input field */
+.form-input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  outline: none;
+  transition:
+    border-color var(--duration-fast),
+    background    var(--duration-fast),
+    box-shadow    var(--duration-normal);
+
+  /* Remove browser number input arrows */
+  -moz-appearance: textfield;
+}
+
+.form-input::-webkit-outer-spin-button,
+.form-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+.form-input::placeholder { color: var(--color-text-faint); }
+
+/* Focus: glow ring in brand blue */
+.form-input:focus {
+  border-color: var(--color-blue);
+  background: rgba(59, 130, 246, 0.06);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+/* Validation error state */
+.form-input.is-invalid {
+  border-color: var(--color-low);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18);
+}
+
+/* Inline error message */
+.form-error {
+  font-size: var(--text-sm);
+  color: var(--color-low);
+  min-height: 1.2em;
+}
+
+/* ── Submit button extras ──────────────────────────────── */
+.btn--lg {
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--text-lg);
+  align-self: flex-start;
+}
+
+/* Loading spinner (CSS-only circle) */
+.btn-spinner {
+  display: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* When button has .is-loading: show spinner, hide arrow icon */
+.btn.is-loading .btn-spinner { display: block; }
+.btn.is-loading .btn-icon    { display: none; }
+.btn.is-loading              { pointer-events: none; opacity: 0.75; }
+
+/* ============================================================
+   RESULT CARD
+   Slides up and fades in when the `hidden` attribute is removed
+   ============================================================ */
+.result-card {
+  background: rgba(59, 130, 246, 0.06);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+
+  /* Starts invisible and shifted down; JS removes `hidden`
+     and adds .is-visible to trigger the transition */
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity   var(--duration-slow) var(--ease-out),
+    transform var(--duration-slow) var(--ease-out);
+}
+
+/* Visible state — toggled by JS */
+.result-card.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Header row: emoji + label + value */
+.result-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.result-card__emoji {
+  font-size: 2.5rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.result-card__label {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  font-weight: 500;
+  margin-bottom: var(--space-1);
+}
+
+/* Big predicted number */
+.result-card__value {
+  font-size: var(--text-4xl);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  background: var(--grad-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+
+/* Confidence bar section */
+.result-card__confidence {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.confidence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.confidence-label {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.confidence-pct {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-blue-light);
+}
+
+/* Track (background) */
+.confidence-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+/* Fill (animated) — JS sets --fill-width custom property */
+.confidence-fill {
+  height: 100%;
+  width: 0%;                    /* starts at 0, animated by JS */
+  background: var(--grad-brand);
+  border-radius: var(--radius-full);
+  transition: width 1s var(--ease-out);
+}
+
+/* Model name footer */
+.result-card__model {
+  font-size: var(--text-sm);
+  color: var(--color-text-faint);
+  font-weight: 500;
+}
+
+/* ── Predictor responsive ──────────────────────────────── */
+@media (max-width: 900px) {
+  .predictor-card { padding: var(--space-6); }
+  .form-row-3 { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 640px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .form-row-3 { grid-template-columns: 1fr; }
+  .btn--lg { align-self: stretch; justify-content: center; }
+}
