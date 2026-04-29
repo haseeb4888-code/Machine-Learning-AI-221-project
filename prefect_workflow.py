@@ -16,8 +16,9 @@ from pathlib import Path
 from typing import Dict, Tuple
 
 import pandas as pd
-from prefect import flow, task, logger
+from prefect import flow, task
 from prefect.context import get_run_context
+from prefect.logging import get_run_logger
 
 from src.models.training import TrainingPipeline
 
@@ -37,6 +38,7 @@ def load_preprocess_task(data_path: str = 'countries of the world.csv') -> Tuple
     Returns:
         Tuple of (processed_df, original_df)
     """
+    logger = get_run_logger()
     logger.info(f"Starting data loading from: {data_path}")
     
     pipeline = TrainingPipeline(data_path)
@@ -57,6 +59,7 @@ def engineer_features_task(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         Dataframe with engineered features
     """
+    logger = get_run_logger()
     logger.info("Starting feature engineering")
     
     pipeline = TrainingPipeline()
@@ -78,6 +81,7 @@ def create_target_task(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         Dataframe with GDP_Category column added
     """
+    logger = get_run_logger()
     logger.info("Creating target variable")
     
     pipeline = TrainingPipeline()
@@ -99,6 +103,7 @@ def prepare_split_task(df: pd.DataFrame) -> Dict:
     Returns:
         Dictionary with X_train, X_test, y_train_reg, y_test_reg, y_train_clf, y_test_clf
     """
+    logger = get_run_logger()
     logger.info("Preparing train-test split (80-20)")
     
     pipeline = TrainingPipeline()
@@ -132,6 +137,7 @@ def train_classification_task(split_data: Dict) -> Dict:
     Returns:
         Dictionary with metrics for each classifier
     """
+    logger = get_run_logger()
     logger.info("Starting classification model training")
     
     pipeline = TrainingPipeline()
@@ -162,6 +168,7 @@ def train_regression_task(split_data: Dict) -> Dict:
     Returns:
         Dictionary with metrics for each regressor
     """
+    logger = get_run_logger()
     logger.info("Starting regression model training")
     
     pipeline = TrainingPipeline()
@@ -193,6 +200,7 @@ def validate_results_task(clf_metrics: Dict, reg_metrics: Dict) -> Dict:
     Returns:
         Summary dictionary with validation results
     """
+    logger = get_run_logger()
     logger.info("Validating training results")
     
     summary = {
@@ -247,6 +255,7 @@ def ml_training_flow(
         Summary dictionary with pipeline results
     """
     
+    logger = get_run_logger()
     context = get_run_context()
     logger.info("=" * 70)
     logger.info(f"🚀 Starting ML Training Pipeline - Run ID: {context.flow_run.id}")
@@ -315,7 +324,10 @@ def scheduled_ml_training_flow() -> Dict:
 
 if __name__ == "__main__":
     # Local execution
-    logger.info("Running ML Training Pipeline locally...")
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    local_logger = logging.getLogger(__name__)
+    local_logger.info("Running ML Training Pipeline locally...")
     
     result = ml_training_flow(
         data_path='countries of the world.csv',

@@ -115,6 +115,23 @@ class ClassificationModelManager:
         print(f"✓ SVM - Train Acc: {train_acc:.3f}, Test Acc: {test_acc:.3f}")
         return model
     
+    def train_gaussian_naive_bayes(self, X_train, y_train, X_test, y_test):
+        """Train Gaussian Naive Bayes classifier"""
+        model = GaussianNB()
+        model.fit(X_train, y_train)
+        
+        train_acc = model.score(X_train, y_train)
+        test_acc = model.score(X_test, y_test)
+        
+        self.models['gaussian_naive_bayes'] = model
+        self.metrics['gaussian_naive_bayes'] = {
+            'train_accuracy': train_acc,
+            'test_accuracy': test_acc,
+        }
+        
+        print(f"✓ Gaussian Naive Bayes - Train Acc: {train_acc:.3f}, Test Acc: {test_acc:.3f}")
+        return model
+    
     def train_all_classifiers(self, X_train, y_train, X_test, y_test):
         """Train all classification models"""
         print("\n🤖 Training classification models...\n")
@@ -124,6 +141,7 @@ class ClassificationModelManager:
         self.train_knn(X_train, y_train, X_test, y_test)
         self.train_xgboost_classifier(X_train, y_train, X_test, y_test)
         self.train_svm(X_train, y_train, X_test, y_test)
+        self.train_gaussian_naive_bayes(X_train, y_train, X_test, y_test)
         
         return self.models
     
