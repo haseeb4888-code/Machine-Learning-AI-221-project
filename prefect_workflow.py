@@ -6,11 +6,14 @@ This workflow orchestrates the complete machine learning pipeline including:
 - Feature engineering
 - Model training (classification and regression)
 - Model evaluation and persistence
+- Saving execution results to file
 
 Run with: prefect deploy prefect_workflow.py:ml_training_flow
 Or locally: python -c "from prefect_workflow import ml_training_flow; ml_training_flow()"
 """
 
+import json
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Tuple
@@ -24,20 +27,51 @@ from src.models.training import TrainingPipeline
 
 
 # ============================================================================
+# LOGGING SETUP
+# ============================================================================
+
+def setup_logging():
+    """Configure logging to file and console"""
+    log_dir = Path('logs')
+    log_dir.mkdir(exist_ok=True)
+    
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    log_file = log_dir / f'prefect_workflow_{timestamp}.log'
+    
+    # Create file handler
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setLevel(logging.INFO)
+    
+    # Create console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    
+    # Create formatter
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+    
+    # Get root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    
+    # Add handlers
+    root_logger.addHandler(file_handler)
+    root_logger.addHandler(console_handler)
+    
+    return log_file
+
+
+# ============================================================================
 # TASKS - Atomic units of work
 # ============================================================================
 
 @task(name="Load and Preprocess Data", retries=2)
 def load_preprocess_task(data_path: str = 'countries of the world.csv') -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Load and preprocess the dataset.
-    
-    Args:
-        data_path: Path to the data file
-        
-    Returns:
-        Tuple of (processed_df, original_df)
-    """
+    """Load and preprocess the dataset."""
     logger = get_run_logger()
     logger.info(f"Starting data loading from: {data_path}")
     
@@ -50,15 +84,7 @@ def load_preprocess_task(data_path: str = 'countries of the world.csv') -> Tuple
 
 @task(name="Engineer Features")
 def engineer_features_task(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Perform feature engineering on the dataset.
-    
-    Args:
-        df: Input dataframe
-        
-    Returns:
-        Dataframe with engineered features
-    """
+    """Perform feature engineering on the dataset."""
     logger = get_run_logger()
     logger.info("Starting feature engineering")
     
@@ -72,15 +98,7 @@ def engineer_features_task(df: pd.DataFrame) -> pd.DataFrame:
 
 @task(name="Create Target Variable")
 def create_target_task(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Create GDP category target variable for classification.
-    
-    Args:
-        df: Input dataframe
-        
-    Returns:
-        Dataframe with GDP_Category column added
-    """
+    """Create GDP category target variable for classification."""
     logger = get_run_logger()
     logger.info("Creating target variable")
     
@@ -94,15 +112,7 @@ def create_target_task(df: pd.DataFrame) -> pd.DataFrame:
 
 @task(name="Prepare Train-Test Split")
 def prepare_split_task(df: pd.DataFrame) -> Dict:
-    """
-    Prepare training and test datasets.
-    
-    Args:
-        df: Input dataframe with all features and targets
-        
-    Returns:
-        Dictionary with X_train, X_test, y_train_reg, y_test_reg, y_train_clf, y_test_clf
-    """
+    """Prepare training and test datasets."""
     logger = get_run_logger()
     logger.info("Preparing train-test split (80-20)")
     
@@ -128,15 +138,7 @@ def prepare_split_task(df: pd.DataFrame) -> Dict:
 
 @task(name="Train Classification Models", retries=1)
 def train_classification_task(split_data: Dict) -> Dict:
-    """
-    Train all classification models.
-    
-    Args:
-        split_data: Dictionary with train/test splits
-        
-    Returns:
-        Dictionary with metrics for each classifier
-    """
+    """Train all classification models."""
     logger = get_run_logger()
     logger.info("Starting classification model training")
     
@@ -146,7 +148,6 @@ def train_classification_task(split_data: Dict) -> Dict:
         split_data['X_test'], split_data['y_test_clf']
     )
     
-    # Extract metrics
     metrics = {
         'classifiers_trained': len(clf_manager.models),
         'model_names': list(clf_manager.models.keys()),
@@ -159,15 +160,7 @@ def train_classification_task(split_data: Dict) -> Dict:
 
 @task(name="Train Regression Models", retries=1)
 def train_regression_task(split_data: Dict) -> Dict:
-    """
-    Train all regression models.
-    
-    Args:
-        split_data: Dictionary with train/test splits
-        
-    Returns:
-        Dictionary with metrics for each regressor
-    """
+    """Train all regression models."""
     logger = get_run_logger()
     logger.info("Starting regression model training")
     
@@ -177,7 +170,6 @@ def train_regression_task(split_data: Dict) -> Dict:
         split_data['X_test'], split_data['y_test_reg']
     )
     
-    # Extract metrics
     metrics = {
         'regressors_trained': len(reg_manager.models),
         'model_names': list(reg_manager.models.keys()),
@@ -190,16 +182,7 @@ def train_regression_task(split_data: Dict) -> Dict:
 
 @task(name="Validate and Log Results")
 def validate_results_task(clf_metrics: Dict, reg_metrics: Dict) -> Dict:
-    """
-    Validate training results and log summary.
-    
-    Args:
-        clf_metrics: Classification metrics
-        reg_metrics: Regression metrics
-        
-    Returns:
-        Summary dictionary with validation results
-    """
+    """Validate training results and log summary."""
     logger = get_run_logger()
     logger.info("Validating training results")
     
@@ -209,10 +192,11 @@ def validate_results_task(clf_metrics: Dict, reg_metrics: Dict) -> Dict:
         'regressors_trained': reg_metrics['regressors_trained'],
         'clf_models': clf_metrics['model_names'],
         'reg_models': reg_metrics['model_names'],
+        'clf_metrics': clf_metrics['metrics'],
+        'reg_metrics': reg_metrics['metrics'],
         'status': 'success'
     }
     
-    # Log best performers
     best_clf = max(clf_metrics['metrics'].items(), 
                    key=lambda x: x[1].get('test_accuracy', 0))
     best_reg = max(reg_metrics['metrics'].items(), 
@@ -222,6 +206,27 @@ def validate_results_task(clf_metrics: Dict, reg_metrics: Dict) -> Dict:
     logger.info(f"✓ Best Regressor: {best_reg[0]} (R²: {best_reg[1].get('test_r2', 0):.3f})")
     
     return summary
+
+
+@task(name="Save Results to File")
+def save_results_task(summary: Dict, output_dir: str = 'results') -> str:
+    """Save the final pipeline summary to a JSON file."""
+    logger = get_run_logger()
+    
+    # Create output directory if it doesn't exist
+    out_path = Path(output_dir)
+    out_path.mkdir(exist_ok=True)
+    
+    # Format a safe filename with timestamp
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    file_path = out_path / f'pipeline_summary_{timestamp}.json'
+    
+    # Write summary dictionary to JSON file
+    with open(file_path, 'w') as f:
+        json.dump(summary, f, indent=4)
+        
+    logger.info(f"✓ Pipeline execution results saved to: {file_path}")
+    return str(file_path)
 
 
 # ============================================================================
@@ -236,23 +241,6 @@ def ml_training_flow(
 ) -> Dict:
     """
     Main Prefect flow orchestrating the complete ML training pipeline.
-    
-    This flow:
-    1. Loads and preprocesses data
-    2. Engineers features
-    3. Creates target variables
-    4. Splits data into train/test sets
-    5. Trains classification models
-    6. Trains regression models
-    7. Validates and logs results
-    
-    Args:
-        data_path: Path to the dataset
-        run_classification: Whether to train classification models
-        run_regression: Whether to train regression models
-        
-    Returns:
-        Summary dictionary with pipeline results
     """
     
     logger = get_run_logger()
@@ -273,7 +261,7 @@ def ml_training_flow(
     # Step 4: Prepare Train-Test Split
     split_data = prepare_split_task(df_with_target)
     
-    # Step 5 & 6: Train Models (can run in parallel)
+    # Step 5 & 6: Train Models
     clf_results = None
     reg_results = None
     
@@ -283,7 +271,7 @@ def ml_training_flow(
     if run_regression:
         reg_results = train_regression_task(split_data)
     
-    # Step 7: Validate and Log Results
+    # Step 7: Validate and Extract Summary
     if clf_results and reg_results:
         summary = validate_results_task(clf_results, reg_results)
     else:
@@ -293,6 +281,10 @@ def ml_training_flow(
             'classification_run': run_classification,
             'regression_run': run_regression
         }
+    
+    # Step 8: Save results to disk
+    saved_file_path = save_results_task(summary)
+    summary['saved_file_path'] = saved_file_path
     
     logger.info("=" * 70)
     logger.info("✅ ML Training Pipeline Completed Successfully!")
@@ -309,7 +301,6 @@ def ml_training_flow(
 def scheduled_ml_training_flow() -> Dict:
     """
     Scheduled version of ML training flow for production deployments.
-    Can be scheduled to run daily, weekly, etc.
     """
     return ml_training_flow(
         data_path='countries of the world.csv',
@@ -323,18 +314,16 @@ def scheduled_ml_training_flow() -> Dict:
 # ============================================================================
 
 if __name__ == "__main__":
-    # Local execution
-    import logging
-    logging.basicConfig(level=logging.INFO)
+    log_file = setup_logging()
     local_logger = logging.getLogger(__name__)
-    local_logger.info("Running ML Training Pipeline locally...")
-    
+    local_logger.info(f"Running ML Training Pipeline locally... Logs: {log_file}")
+
     result = ml_training_flow(
         data_path='countries of the world.csv',
         run_classification=True,
         run_regression=True
     )
-    
+
     print("\n" + "=" * 70)
     print("PIPELINE EXECUTION SUMMARY")
     print("=" * 70)
@@ -342,4 +331,5 @@ if __name__ == "__main__":
     print(f"Classifiers Trained: {result.get('classifiers_trained', 0)}")
     print(f"Regressors Trained: {result.get('regressors_trained', 0)}")
     print(f"Timestamp: {result.get('timestamp', 'N/A')}")
+    print(f"Results File: {result.get('saved_file_path', 'N/A')}")
     print("=" * 70)
