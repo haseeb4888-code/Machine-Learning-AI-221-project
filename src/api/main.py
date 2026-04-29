@@ -45,6 +45,13 @@ pipeline_metrics = {
     'total_features': 25
 }
 
+# Clustering model metrics from pipeline
+clustering_metrics_data = {
+    'kmeans': {},
+    'hierarchical': {},
+    'dbscan': {}
+}
+
 # Cluster name mapping for better readability
 CLUSTER_NAMES = {
     0: "Developing Economies",
@@ -81,7 +88,7 @@ def get_latest_pipeline_summary() -> Dict[str, Any]:
 
 def extract_best_metrics(pipeline_data: Dict[str, Any]) -> None:
     """Extract best model metrics from pipeline summary and update global metrics"""
-    global pipeline_metrics
+    global pipeline_metrics, clustering_metrics_data
     
     if not pipeline_data or pipeline_data.get('status') != 'success':
         print("⚠ Pipeline data not available or not successful")
@@ -110,7 +117,7 @@ def extract_best_metrics(pipeline_data: Dict[str, Any]) -> None:
         pipeline_metrics['best_regression_rmse'] = best_reg[1].get('rmse', 0.0)
         print(f"✓ Best Regression: {best_reg[0]} (R²: {best_reg[1].get('test_r2', 0):.4f}, RMSE: {best_reg[1].get('rmse', 0):.2f})")
     
-    # Extract best clustering model
+    # Extract best clustering model and store all clustering metrics
     if 'clustering_metrics' in pipeline_data:
         clust_metrics = pipeline_data['clustering_metrics']
         best_clust = max(
@@ -120,6 +127,11 @@ def extract_best_metrics(pipeline_data: Dict[str, Any]) -> None:
         pipeline_metrics['best_clustering_model'] = best_clust[0]
         pipeline_metrics['best_clustering_silhouette'] = best_clust[1].get('silhouette_score', 0.0)
         print(f"✓ Best Clustering: {best_clust[0]} (Silhouette: {best_clust[1].get('silhouette_score', 0):.4f})")
+        
+        # Store metrics for all clustering models
+        for model_name, metrics in clust_metrics.items():
+            clustering_metrics_data[model_name] = metrics
+        print(f"✓ Clustering metrics loaded for all models")
     
     pipeline_metrics['timestamp'] = pipeline_data.get('timestamp', 'N/A')
     print(f"✓ Metrics extracted from pipeline execution")
@@ -279,21 +291,23 @@ def list_models():
 
 @app.post("/predict/gdp", response_model=PredictionResponse, tags=["Predictions"])
 def predict_gdp(features: CountryFeatures):
-    """Predict GDP value using regression model"""
+    """Predict GDP value using best regression model"""
     try:
-        if 'random_forest' not in regression_models:
-            raise HTTPException(status_code=503, detail="Regression model not loaded")
+        best_reg_model = pipeline_metrics['best_regression_model']
         
-        # Prepare feature array with engineered features (17 raw + 6 engineered = 23 total)
+        if best_reg_model == 'N/A' or best_reg_model not in regression_models:
+            raise HTTPException(status_code=503, detail="No regression model available. Run training pipeline first.")
+        
+        # Prepare feature array with engineered features (17 raw + 6 engineered = 24 total)
         feature_values = engineer_features_for_prediction(features)
         
-        model = regression_models['random_forest']
+        model = regression_models[best_reg_model]
         prediction = model.predict(feature_values)[0]
         
         return PredictionResponse(
             predicted_value=float(prediction),
-            confidence=0.78,
-            model_used="Random Forest Regressor",
+            confidence=pipeline_metrics['best_regression_r2'],
+            model_used=f"{best_reg_model.replace('_', ' ').title()} Regressor",
             input_features=features.dict()
         )
     
@@ -306,15 +320,17 @@ def predict_gdp(features: CountryFeatures):
 
 @app.post("/predict/gdp-category", response_model=PredictionResponse, tags=["Predictions"])
 def predict_gdp_category(features: CountryFeatures):
-    """Predict GDP category (Low/Medium/High) using classification model"""
+    """Predict GDP category (Low/Medium/High) using best classification model"""
     try:
-        if 'random_forest' not in classification_models:
-            raise HTTPException(status_code=503, detail="Classification model not loaded")
+        best_clf_model = pipeline_metrics['best_classification_model']
         
-        # Prepare feature array with engineered features (17 raw + 6 engineered = 23 total)
+        if best_clf_model == 'N/A' or best_clf_model not in classification_models:
+            raise HTTPException(status_code=503, detail="No classification model available. Run training pipeline first.")
+        
+        # Prepare feature array with engineered features (17 raw + 6 engineered = 24 total)
         feature_values = engineer_features_for_prediction(features)
         
-        model = classification_models['random_forest']
+        model = classification_models[best_clf_model]
         prediction = model.predict(feature_values)[0]
         
         categories = {0: 'Low', 1: 'Medium', 2: 'High'}
@@ -322,8 +338,8 @@ def predict_gdp_category(features: CountryFeatures):
         
         return PredictionResponse(
             predicted_category=category_name,
-            confidence=0.82,
-            model_used="Random Forest Classifier",
+            confidence=pipeline_metrics['best_classification_accuracy'],
+            model_used=f"{best_clf_model.replace('_', ' ').title()} Classifier",
             input_features=features.dict()
         )
     
@@ -358,7 +374,7 @@ def analyze_country_cluster(features: CountryFeatures):
             cluster_assignment=int(cluster_id),
             cluster_name=cluster_name,
             model_used="KMeans Clustering",
-            silhouette_score=0.43,  # From your training results
+            silhouette_score=clustering_metrics_data['kmeans'].get('silhouette_score', 0.0),
             input_features=features.dict()
         )
     
@@ -386,8 +402,8 @@ def get_cluster_summary():
         return ClusterAnalysisResponse(
             model_used="KMeans Clustering",
             n_clusters=n_clusters,
-            silhouette_score=0.43,  # From training results
-            davies_bouldin_score=0.78,  # From training results
+            silhouette_score=clustering_metrics_data['kmeans'].get('silhouette_score', 0.0),
+            davies_bouldin_score=clustering_metrics_data['kmeans'].get('davies_bouldin_score', 0.0),
             cluster_distribution={
                 "cluster_0": 45,  # Example: 45 countries in cluster 0
                 "cluster_1": 78,  # Example: 78 countries in cluster 1
@@ -425,7 +441,7 @@ def compare_clustering_models(features: CountryFeatures):
             results['kmeans'] = {
                 'cluster': int(cluster),
                 'algorithm': 'KMeans',
-                'silhouette_score': 0.43
+                'silhouette_score': clustering_metrics_data['kmeans'].get('silhouette_score', 0.0)
             }
         
         # Hierarchical
@@ -435,7 +451,7 @@ def compare_clustering_models(features: CountryFeatures):
             results['hierarchical'] = {
                 'cluster': int(cluster),
                 'algorithm': 'Hierarchical Clustering',
-                'silhouette_score': 0.40
+                'silhouette_score': clustering_metrics_data['hierarchical'].get('silhouette_score', 0.0)
             }
         
         # DBSCAN

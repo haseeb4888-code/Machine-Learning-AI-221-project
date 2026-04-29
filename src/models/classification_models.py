@@ -9,6 +9,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
+from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import xgboost as xgb
 import pandas as pd
@@ -132,6 +133,31 @@ class ClassificationModelManager:
         print(f"✓ Gaussian Naive Bayes - Train Acc: {train_acc:.3f}, Test Acc: {test_acc:.3f}")
         return model
     
+    def train_mlp_classifier(self, X_train, y_train, X_test, y_test):
+        """Train Multi-Layer Perceptron classifier"""
+        model = MLPClassifier(
+            hidden_layer_sizes=(100, 50),
+            max_iter=500,
+            learning_rate='adaptive',
+            learning_rate_init=0.001,
+            random_state=42,
+            early_stopping=True,
+            validation_fraction=0.1
+        )
+        model.fit(X_train, y_train)
+        
+        train_acc = model.score(X_train, y_train)
+        test_acc = model.score(X_test, y_test)
+        
+        self.models['mlp'] = model
+        self.metrics['mlp'] = {
+            'train_accuracy': train_acc,
+            'test_accuracy': test_acc,
+        }
+        
+        print(f"✓ MLP Classifier - Train Acc: {train_acc:.3f}, Test Acc: {test_acc:.3f}")
+        return model
+    
     def train_all_classifiers(self, X_train, y_train, X_test, y_test):
         """Train all classification models"""
         print("\n🤖 Training classification models...\n")
@@ -142,6 +168,7 @@ class ClassificationModelManager:
         self.train_xgboost_classifier(X_train, y_train, X_test, y_test)
         self.train_svm(X_train, y_train, X_test, y_test)
         self.train_gaussian_naive_bayes(X_train, y_train, X_test, y_test)
+        self.train_mlp_classifier(X_train, y_train, X_test, y_test)
         
         return self.models
     

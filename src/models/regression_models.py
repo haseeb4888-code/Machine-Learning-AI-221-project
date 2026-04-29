@@ -6,6 +6,7 @@ from pathlib import Path
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.svm import SVR
+from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 import xgboost as xgb
 import pandas as pd
@@ -145,6 +146,38 @@ class RegressionModelManager:
         print(f"✓ SVM - Train R²: {train_r2:.3f}, Test R²: {test_r2:.3f}, RMSE: {rmse:.2f}")
         return model
     
+    def train_mlp_regressor(self, X_train, y_train, X_test, y_test):
+        """Train Multi-Layer Perceptron Regressor"""
+        model = MLPRegressor(
+            hidden_layer_sizes=(100, 50),
+            max_iter=500,
+            learning_rate='adaptive',
+            learning_rate_init=0.001,
+            random_state=42,
+            early_stopping=True,
+            validation_fraction=0.1
+        )
+        model.fit(X_train, y_train)
+        
+        y_pred_train = model.predict(X_train)
+        y_pred_test = model.predict(X_test)
+        
+        train_r2 = r2_score(y_train, y_pred_train)
+        test_r2 = r2_score(y_test, y_pred_test)
+        rmse = np.sqrt(mean_squared_error(y_test, y_pred_test))
+        mae = mean_absolute_error(y_test, y_pred_test)
+        
+        self.models['mlp'] = model
+        self.metrics['mlp'] = {
+            'train_r2': train_r2,
+            'test_r2': test_r2,
+            'rmse': rmse,
+            'mae': mae
+        }
+        
+        print(f"✓ MLP Regressor - Train R²: {train_r2:.3f}, Test R²: {test_r2:.3f}, RMSE: {rmse:.2f}")
+        return model
+    
     def train_all_regressors(self, X_train, y_train, X_test, y_test):
         """Train all regression models"""
         print("\n📊 Training regression models...\n")
@@ -154,6 +187,7 @@ class RegressionModelManager:
         self.train_gradient_boosting(X_train, y_train, X_test, y_test)
         self.train_xgboost_regressor(X_train, y_train, X_test, y_test)
         self.train_svm_regressor(X_train, y_train, X_test, y_test)
+        self.train_mlp_regressor(X_train, y_train, X_test, y_test)
         
         return self.models
     
