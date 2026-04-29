@@ -10,7 +10,7 @@ from pathlib import Path
 import traceback
 from typing import Dict, Any
 
-from src.api.schemas import (
+from schemas import (
     CountryFeatures, PredictionResponse, HealthResponse, MetricsResponse,
     ClusteringResponse, ClusterAnalysisResponse
 )
@@ -125,6 +125,56 @@ def extract_best_metrics(pipeline_data: Dict[str, Any]) -> None:
     print(f"✓ Metrics extracted from pipeline execution")
 
 
+def engineer_features_for_prediction(features: CountryFeatures) -> np.ndarray:
+    """
+    Calculate engineered features from raw input features.
+    Returns a feature array with all 23 features (17 raw + 6 engineered) in correct order.
+    """
+    # Raw features (17 total)
+    raw_features = [
+        features.population,
+        features.area,
+        features.pop_density,
+        features.coastline,
+        features.net_migration,
+        features.infant_mortality,
+        features.gdp_per_capita,
+        features.literacy,
+        features.phones_per_1000,
+        features.arable,
+        features.crops,
+        features.other,
+        features.climate,
+        features.birthrate,
+        features.deathrate,
+        features.agriculture,
+        features.industry,
+        features.service
+    ]
+    
+    # Calculate engineered features (6 total)
+    gdp_to_mortality = features.gdp_per_capita / (features.infant_mortality + 1)
+    pop_to_area = features.population / (features.area + 1)
+    development_index = (features.literacy + features.phones_per_1000) / 2
+    birth_death_ratio = features.birthrate / (features.deathrate + 1)
+    economic_balance = features.service - features.agriculture
+    total_land_used = features.arable + features.crops + features.other
+    
+    engineered_features = [
+        gdp_to_mortality,
+        pop_to_area,
+        development_index,
+        birth_death_ratio,
+        economic_balance,
+        total_land_used
+    ]
+    
+    # Combine all features (23 total)
+    all_features = raw_features + engineered_features
+    
+    return np.array([all_features])
+
+
 def load_models():
     """Load all trained models from disk"""
     global regression_models, classification_models, clustering_models, model_metadata
@@ -234,26 +284,8 @@ def predict_gdp(features: CountryFeatures):
         if 'random_forest' not in regression_models:
             raise HTTPException(status_code=503, detail="Regression model not loaded")
         
-        # Prepare feature array (order must match training)
-        feature_values = np.array([[
-            features.population,
-            features.area,
-            features.pop_density,
-            features.coastline,
-            features.net_migration,
-            features.infant_mortality,
-            features.literacy,
-            features.phones_per_1000,
-            features.arable,
-            features.crops,
-            features.other,
-            features.climate,
-            features.birthrate,
-            features.deathrate,
-            features.agriculture,
-            features.industry,
-            features.service
-        ]])
+        # Prepare feature array with engineered features (17 raw + 6 engineered = 23 total)
+        feature_values = engineer_features_for_prediction(features)
         
         model = regression_models['random_forest']
         prediction = model.predict(feature_values)[0]
@@ -279,26 +311,8 @@ def predict_gdp_category(features: CountryFeatures):
         if 'random_forest' not in classification_models:
             raise HTTPException(status_code=503, detail="Classification model not loaded")
         
-        # Prepare feature array
-        feature_values = np.array([[
-            features.population,
-            features.area,
-            features.pop_density,
-            features.coastline,
-            features.net_migration,
-            features.infant_mortality,
-            features.literacy,
-            features.phones_per_1000,
-            features.arable,
-            features.crops,
-            features.other,
-            features.climate,
-            features.birthrate,
-            features.deathrate,
-            features.agriculture,
-            features.industry,
-            features.service
-        ]])
+        # Prepare feature array with engineered features (17 raw + 6 engineered = 23 total)
+        feature_values = engineer_features_for_prediction(features)
         
         model = classification_models['random_forest']
         prediction = model.predict(feature_values)[0]
@@ -331,26 +345,8 @@ def analyze_country_cluster(features: CountryFeatures):
         if 'kmeans' not in clustering_models:
             raise HTTPException(status_code=503, detail="Clustering model not loaded")
         
-        # Prepare feature array (same features as classification/regression)
-        feature_values = np.array([[
-            features.population,
-            features.area,
-            features.pop_density,
-            features.coastline,
-            features.net_migration,
-            features.infant_mortality,
-            features.literacy,
-            features.phones_per_1000,
-            features.arable,
-            features.crops,
-            features.other,
-            features.climate,
-            features.birthrate,
-            features.deathrate,
-            features.agriculture,
-            features.industry,
-            features.service
-        ]])
+        # Prepare feature array with engineered features (17 raw + 6 engineered = 23 total)
+        feature_values = engineer_features_for_prediction(features)
         
         model = clustering_models['kmeans']
         cluster_id = model.predict(feature_values)[0]
@@ -419,26 +415,8 @@ def compare_clustering_models(features: CountryFeatures):
     try:
         results = {}
         
-        # Prepare feature array
-        feature_values = np.array([[
-            features.population,
-            features.area,
-            features.pop_density,
-            features.coastline,
-            features.net_migration,
-            features.infant_mortality,
-            features.literacy,
-            features.phones_per_1000,
-            features.arable,
-            features.crops,
-            features.other,
-            features.climate,
-            features.birthrate,
-            features.deathrate,
-            features.agriculture,
-            features.industry,
-            features.service
-        ]])
+        # Prepare feature array with engineered features (17 raw + 6 engineered = 23 total)
+        feature_values = engineer_features_for_prediction(features)
         
         # KMeans
         if 'kmeans' in clustering_models:
@@ -573,6 +551,3 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
