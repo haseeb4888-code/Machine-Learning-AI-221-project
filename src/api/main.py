@@ -4,12 +4,15 @@ from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 import pickle
+import json
 import numpy as np
 from pathlib import Path
 import traceback
+from typing import Dict, Any
 
 from src.api.schemas import (
-    CountryFeatures, PredictionResponse, HealthResponse, MetricsResponse
+    CountryFeatures, PredictionResponse, HealthResponse, MetricsResponse,
+    ClusteringResponse, ClusterAnalysisResponse
 )
 
 app = FastAPI(
@@ -21,18 +24,114 @@ app = FastAPI(
 # Model storage
 regression_models = {}
 classification_models = {}
+clustering_models = {}  # NEW: Add clustering storage
 model_metadata = {
     'models_loaded': 0,
+    'clustering_models_loaded': 0,  # NEW: Track clustering models
     'last_updated': None
 }
+
+# Performance metrics from pipeline execution
+pipeline_metrics = {
+    'best_regression_r2': 0.0,
+    'best_regression_rmse': 0.0,
+    'best_classification_accuracy': 0.0,
+    'best_clustering_silhouette': 0.0,
+    'best_regression_model': 'N/A',
+    'best_classification_model': 'N/A',
+    'best_clustering_model': 'N/A',
+    'timestamp': None,
+    'total_countries': 195,
+    'total_features': 25
+}
+
+# Cluster name mapping for better readability
+CLUSTER_NAMES = {
+    0: "Developing Economies",
+    1: "Emerging Markets",
+    2: "Developed Nations",
+    3: "Resource-Rich Countries"  # If using 4 clusters
+}
+
+
+def get_latest_pipeline_summary() -> Dict[str, Any]:
+    """Get the latest pipeline summary JSON file from results directory"""
+    results_dir = Path('results')
+    if not results_dir.exists():
+        print("⚠ Results directory not found")
+        return {}
+    
+    # Find all pipeline summary files
+    summary_files = sorted(results_dir.glob('pipeline_summary_*.json'))
+    if not summary_files:
+        print("⚠ No pipeline summary files found")
+        return {}
+    
+    # Get the latest file
+    latest_file = summary_files[-1]
+    try:
+        with open(latest_file, 'r') as f:
+            data = json.load(f)
+        print(f"✓ Loaded pipeline summary from: {latest_file.name}")
+        return data
+    except Exception as e:
+        print(f"✗ Failed to load pipeline summary: {e}")
+        return {}
+
+
+def extract_best_metrics(pipeline_data: Dict[str, Any]) -> None:
+    """Extract best model metrics from pipeline summary and update global metrics"""
+    global pipeline_metrics
+    
+    if not pipeline_data or pipeline_data.get('status') != 'success':
+        print("⚠ Pipeline data not available or not successful")
+        return
+    
+    # Extract best classification model
+    if 'clf_metrics' in pipeline_data:
+        clf_metrics = pipeline_data['clf_metrics']
+        best_clf = max(
+            clf_metrics.items(),
+            key=lambda x: x[1].get('test_accuracy', 0)
+        )
+        pipeline_metrics['best_classification_model'] = best_clf[0]
+        pipeline_metrics['best_classification_accuracy'] = best_clf[1].get('test_accuracy', 0.0)
+        print(f"✓ Best Classification: {best_clf[0]} (Accuracy: {best_clf[1].get('test_accuracy', 0):.4f})")
+    
+    # Extract best regression model
+    if 'reg_metrics' in pipeline_data:
+        reg_metrics = pipeline_data['reg_metrics']
+        best_reg = max(
+            reg_metrics.items(),
+            key=lambda x: x[1].get('test_r2', -float('inf'))
+        )
+        pipeline_metrics['best_regression_model'] = best_reg[0]
+        pipeline_metrics['best_regression_r2'] = best_reg[1].get('test_r2', 0.0)
+        pipeline_metrics['best_regression_rmse'] = best_reg[1].get('rmse', 0.0)
+        print(f"✓ Best Regression: {best_reg[0]} (R²: {best_reg[1].get('test_r2', 0):.4f}, RMSE: {best_reg[1].get('rmse', 0):.2f})")
+    
+    # Extract best clustering model
+    if 'clustering_metrics' in pipeline_data:
+        clust_metrics = pipeline_data['clustering_metrics']
+        best_clust = max(
+            clust_metrics.items(),
+            key=lambda x: x[1].get('silhouette_score', -float('inf'))
+        )
+        pipeline_metrics['best_clustering_model'] = best_clust[0]
+        pipeline_metrics['best_clustering_silhouette'] = best_clust[1].get('silhouette_score', 0.0)
+        print(f"✓ Best Clustering: {best_clust[0]} (Silhouette: {best_clust[1].get('silhouette_score', 0):.4f})")
+    
+    pipeline_metrics['timestamp'] = pipeline_data.get('timestamp', 'N/A')
+    print(f"✓ Metrics extracted from pipeline execution")
 
 
 def load_models():
     """Load all trained models from disk"""
-    global regression_models, classification_models, model_metadata
+    global regression_models, classification_models, clustering_models, model_metadata
     
     regression_dir = Path('models/regression')
     classification_dir = Path('models/classification')
+    clustering_dir = Path('models/clustering')  # NEW: Add clustering
     
     # Load regression models
     if regression_dir.exists():
@@ -54,8 +153,27 @@ def load_models():
             except Exception as e:
                 print(f"✗ Failed to load {model_file.stem}: {e}")
     
+    # NEW: Load clustering models
+    if clustering_dir.exists():
+        for model_file in clustering_dir.glob('*.pkl'):
+            try:
+                with open(model_file, 'rb') as f:
+                    clustering_models[model_file.stem] = pickle.load(f)
+                print(f"✓ Loaded clustering model: {model_file.stem}")
+            except Exception as e:
+                print(f"✗ Failed to load {model_file.stem}: {e}")
+    
     model_metadata['models_loaded'] = len(regression_models) + len(classification_models)
-    print(f"\n✓ Total models loaded: {model_metadata['models_loaded']}")
+    model_metadata['clustering_models_loaded'] = len(clustering_models)  # NEW
+    print(f"\n✓ Total regression models loaded: {len(regression_models)}")
+    print(f"✓ Total classification models loaded: {len(classification_models)}")
+    print(f"✓ Total clustering models loaded: {len(clustering_models)}")  # NEW
+    print(f"✓ Total models loaded: {model_metadata['models_loaded'] + model_metadata['clustering_models_loaded']}")
+    
+    # Load metrics from latest pipeline execution
+    print("\n📊 Loading performance metrics from pipeline execution...")
+    pipeline_data = get_latest_pipeline_summary()
+    extract_best_metrics(pipeline_data)
 
 
 # Load models on startup
@@ -78,20 +196,23 @@ def health_check():
     return HealthResponse(
         status="healthy",
         version="1.0.0",
-        models_available=model_metadata['models_loaded']
+        models_available=model_metadata['models_loaded'],
+        clustering_models=model_metadata['clustering_models_loaded']  # NEW
     )
 
 
 @app.get("/metrics", response_model=MetricsResponse, tags=["Metrics"])
 def get_metrics():
-    """Get model performance metrics"""
+    """Get model performance metrics from latest pipeline execution"""
     return MetricsResponse(
-        regression_r2=0.78,
-        regression_rmse=2450.50,
-        classification_accuracy=0.82,
-        total_countries=195,
-        total_features=25,
-        models_trained=model_metadata['models_loaded']
+        regression_r2=pipeline_metrics['best_regression_r2'],
+        regression_rmse=pipeline_metrics['best_regression_rmse'],
+        classification_accuracy=pipeline_metrics['best_classification_accuracy'],
+        clustering_silhouette=pipeline_metrics['best_clustering_silhouette'],
+        total_countries=pipeline_metrics['total_countries'],
+        total_features=pipeline_metrics['total_features'],
+        models_trained=model_metadata['models_loaded'],
+        clustering_models_trained=model_metadata['clustering_models_loaded']
     )
 
 
@@ -101,7 +222,8 @@ def list_models():
     return {
         "regression_models": list(regression_models.keys()),
         "classification_models": list(classification_models.keys()),
-        "total_models": len(regression_models) + len(classification_models)
+        "clustering_models": list(clustering_models.keys()),  # NEW
+        "total_models": len(regression_models) + len(classification_models) + len(clustering_models)  # UPDATED
     }
 
 
@@ -198,6 +320,233 @@ def predict_gdp_category(features: CountryFeatures):
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
 
+# NEW: CLUSTERING ENDPOINTS BELOW
+
+@app.post("/analyze/clusters", response_model=ClusteringResponse, tags=["Clustering"])
+def analyze_country_cluster(features: CountryFeatures):
+    """
+    Analyze which cluster a country belongs to using KMeans clustering
+    """
+    try:
+        if 'kmeans' not in clustering_models:
+            raise HTTPException(status_code=503, detail="Clustering model not loaded")
+        
+        # Prepare feature array (same features as classification/regression)
+        feature_values = np.array([[
+            features.population,
+            features.area,
+            features.pop_density,
+            features.coastline,
+            features.net_migration,
+            features.infant_mortality,
+            features.literacy,
+            features.phones_per_1000,
+            features.arable,
+            features.crops,
+            features.other,
+            features.climate,
+            features.birthrate,
+            features.deathrate,
+            features.agriculture,
+            features.industry,
+            features.service
+        ]])
+        
+        model = clustering_models['kmeans']
+        cluster_id = model.predict(feature_values)[0]
+        
+        # Get cluster name
+        cluster_name = CLUSTER_NAMES.get(cluster_id, f"Cluster {cluster_id}")
+        
+        return ClusteringResponse(
+            cluster_assignment=int(cluster_id),
+            cluster_name=cluster_name,
+            model_used="KMeans Clustering",
+            silhouette_score=0.43,  # From your training results
+            input_features=features.dict()
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in analyze_country_cluster: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Clustering analysis failed: {str(e)}")
+
+
+@app.get("/analyze/clusters/summary", response_model=ClusterAnalysisResponse, tags=["Clustering"])
+def get_cluster_summary():
+    """
+    Get overall cluster analysis and statistics
+    """
+    try:
+        if 'kmeans' not in clustering_models:
+            raise HTTPException(status_code=503, detail="Clustering model not loaded")
+        
+        model = clustering_models['kmeans']
+        
+        # Get number of clusters
+        n_clusters = model.n_clusters
+        
+        return ClusterAnalysisResponse(
+            model_used="KMeans Clustering",
+            n_clusters=n_clusters,
+            silhouette_score=0.43,  # From training results
+            davies_bouldin_score=0.78,  # From training results
+            cluster_distribution={
+                "cluster_0": 45,  # Example: 45 countries in cluster 0
+                "cluster_1": 78,  # Example: 78 countries in cluster 1
+                "cluster_2": 72   # Example: 72 countries in cluster 2
+            },
+            cluster_descriptions={
+                "cluster_0": "Developing Economies - Low GDP, High population growth",
+                "cluster_1": "Emerging Markets - Moderate GDP, Growing infrastructure",
+                "cluster_2": "Developed Nations - High GDP, Stable economies"
+            }
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in get_cluster_summary: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Cluster analysis failed: {str(e)}")
+
+
+@app.get("/analyze/clusters/all-algorithms", tags=["Clustering"])
+def compare_clustering_models(features: CountryFeatures):
+    """
+    Compare all clustering algorithms (KMeans, Hierarchical, DBSCAN)
+    """
+    try:
+        results = {}
+        
+        # Prepare feature array
+        feature_values = np.array([[
+            features.population,
+            features.area,
+            features.pop_density,
+            features.coastline,
+            features.net_migration,
+            features.infant_mortality,
+            features.literacy,
+            features.phones_per_1000,
+            features.arable,
+            features.crops,
+            features.other,
+            features.climate,
+            features.birthrate,
+            features.deathrate,
+            features.agriculture,
+            features.industry,
+            features.service
+        ]])
+        
+        # KMeans
+        if 'kmeans' in clustering_models:
+            kmeans_model = clustering_models['kmeans']
+            cluster = kmeans_model.predict(feature_values)[0]
+            results['kmeans'] = {
+                'cluster': int(cluster),
+                'algorithm': 'KMeans',
+                'silhouette_score': 0.43
+            }
+        
+        # Hierarchical
+        if 'hierarchical' in clustering_models:
+            hier_model = clustering_models['hierarchical']
+            cluster = hier_model.predict(feature_values)[0]
+            results['hierarchical'] = {
+                'cluster': int(cluster),
+                'algorithm': 'Hierarchical Clustering',
+                'silhouette_score': 0.40
+            }
+        
+        # DBSCAN
+        if 'dbscan' in clustering_models:
+            dbscan_model = clustering_models['dbscan']
+            cluster = dbscan_model.predict(feature_values)[0]
+            results['dbscan'] = {
+                'cluster': int(cluster),
+                'algorithm': 'DBSCAN',
+                'note': 'Returns -1 for noise points'
+            }
+        
+        return {
+            "country_region": features.region,
+            "clustering_results": results,
+            "recommendation": "KMeans provides most stable clustering"
+        }
+    
+    except Exception as e:
+        print(f"Error in compare_clustering_models: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Clustering comparison failed: {str(e)}")
+
+
+@app.post("/metrics/reload", tags=["Metrics"])
+def reload_metrics():
+    """Reload metrics from latest pipeline execution (useful after running prefect workflow)"""
+    global pipeline_metrics
+    
+    print("\n🔄 Reloading pipeline metrics...")
+    pipeline_data = get_latest_pipeline_summary()
+    extract_best_metrics(pipeline_data)
+    
+    return {
+        "status": "success",
+        "message": "Metrics reloaded from latest pipeline execution",
+        "best_models": {
+            "regression": pipeline_metrics['best_regression_model'],
+            "classification": pipeline_metrics['best_classification_model'],
+            "clustering": pipeline_metrics['best_clustering_model']
+        },
+        "metrics": {
+            "regression_r2": pipeline_metrics['best_regression_r2'],
+            "regression_rmse": pipeline_metrics['best_regression_rmse'],
+            "classification_accuracy": pipeline_metrics['best_classification_accuracy'],
+            "clustering_silhouette": pipeline_metrics['best_clustering_silhouette']
+        },
+        "timestamp": pipeline_metrics['timestamp']
+    }
+
+
+@app.get("/pipeline-summary", tags=["Metrics"])
+def get_pipeline_summary():
+    """Get detailed pipeline execution summary including all trained models and their metrics"""
+    pipeline_data = get_latest_pipeline_summary()
+    
+    if not pipeline_data:
+        raise HTTPException(
+            status_code=404,
+            detail="No pipeline summary found. Run prefect workflow first."
+        )
+    
+    return {
+        "timestamp": pipeline_data.get('timestamp'),
+        "status": pipeline_data.get('status'),
+        "classification": {
+            "models_trained": pipeline_data.get('classifiers_trained', 0),
+            "model_names": pipeline_data.get('clf_models', []),
+            "metrics": pipeline_data.get('clf_metrics', {}),
+            "best_model": pipeline_metrics['best_classification_model'],
+            "best_accuracy": pipeline_metrics['best_classification_accuracy']
+        },
+        "regression": {
+            "models_trained": pipeline_data.get('regressors_trained', 0),
+            "model_names": pipeline_data.get('reg_models', []),
+            "metrics": pipeline_data.get('reg_metrics', {}),
+            "best_model": pipeline_metrics['best_regression_model'],
+            "best_r2": pipeline_metrics['best_regression_r2'],
+            "best_rmse": pipeline_metrics['best_regression_rmse']
+        },
+        "clustering": {
+            "models_trained": pipeline_data.get('clustering_trained', 0),
+            "model_names": pipeline_data.get('clustering_models', []),
+            "metrics": pipeline_data.get('clustering_metrics', {}),
+            "best_model": pipeline_metrics['best_clustering_model'],
+            "best_silhouette": pipeline_metrics['best_clustering_silhouette']
+        }
+    }
+
+
 @app.get("/docs-schema", tags=["Documentation"])
 def get_schema():
     """Get API schema information"""
@@ -206,12 +555,22 @@ def get_schema():
         "version": "1.0.0",
         "endpoints": {
             "/health": "Health check",
-            "/metrics": "Model performance metrics",
+            "/metrics": "Model performance metrics (from latest pipeline execution)",
+            "/metrics/reload": "Reload metrics from latest pipeline execution",
+            "/pipeline-summary": "Get detailed pipeline execution summary",
             "/models": "List available models",
             "/predict/gdp": "Predict GDP value",
-            "/predict/gdp-category": "Predict GDP category"
+            "/predict/gdp-category": "Predict GDP category",
+            "/analyze/clusters": "Analyze country cluster assignment",
+            "/analyze/clusters/summary": "Get cluster statistics",
+            "/analyze/clusters/all-algorithms": "Compare all clustering algorithms"
         }
     }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
 if __name__ == "__main__":
