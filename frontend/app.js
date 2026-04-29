@@ -559,3 +559,226 @@
   });
 
 })();
+
+
+/* ============================================================
+   GDP CATEGORY CLASSIFIER — Form submit → API → Badge card
+   ============================================================ */
+(function () {
+  'use strict';
+
+  /* ── Element references ─────────────────────────────────── */
+  const form         = document.getElementById('classifyForm');
+  const submitBtn    = document.getElementById('classifySubmitBtn');
+  const errorEl      = document.getElementById('classifyFormError');
+  const resultCard   = document.getElementById('classifyResult');
+  const badgeEl      = document.getElementById('categoryBadge');
+  const emojiEl      = document.getElementById('categoryEmoji');
+  const labelEl      = document.getElementById('categoryLabel');
+  const rangeEl      = document.getElementById('categoryRange');
+  const explanEl     = document.getElementById('categoryExplanation');
+  const modelEl      = document.getElementById('classifyModelUsed');
+  const autofillBtn  = document.getElementById('classifyAutofillBtn');
+
+  if (!form) return;
+
+  const API_BASE = 'http://localhost:8000';
+
+  /* Field names — same 17 as the GDP predictor, but IDs are
+     prefixed with "c-" to avoid colliding with predictor inputs */
+  const FIELD_NAMES = [
+    'population', 'area', 'pop_density', 'coastline',
+    'net_migration', 'infant_mortality', 'literacy',
+    'phones_per_1000', 'arable', 'crops', 'other',
+    'climate', 'birthrate', 'deathrate',
+    'agriculture', 'industry', 'service'
+  ];
+
+  /* ── Category metadata ──────────────────────────────────── */
+  /* Each category the API can return maps to a colour theme,
+     badge text, GDP range label, and an explanation.          */
+  const CATEGORIES = {
+    low: {
+      emoji      : '🔴',
+      label      : 'Low GDP Economy',
+      range      : '< $5,000 per capita',
+      explanation: 'Countries in the low-GDP tier often face significant '
+                 + 'developmental challenges, including limited industrial '
+                 + 'capacity, high dependence on subsistence agriculture, '
+                 + 'and constrained access to education and healthcare.',
+      modifier   : 'low',
+    },
+    medium: {
+      emoji      : '🟡',
+      label      : 'Medium GDP Economy',
+      range      : '$5,000 – $15,000 per capita',
+      explanation: 'Middle-income economies are typically transitioning from '
+                 + 'agriculture-led growth toward manufacturing and services. '
+                 + 'They show improving human development scores but may still '
+                 + 'experience income inequality and infrastructure gaps.',
+      modifier   : 'medium',
+    },
+    high: {
+      emoji      : '🟢',
+      label      : 'High GDP Economy',
+      range      : '> $15,000 per capita',
+      explanation: 'High-GDP countries typically have advanced infrastructure, '
+                 + 'high human development indices, and diversified industrial '
+                 + 'and service-based economies with strong institutional '
+                 + 'frameworks and technological innovation.',
+      modifier   : 'high',
+    },
+  };
+
+  /* ── Helpers ────────────────────────────────────────────── */
+
+  function collectFormData() {
+    const data = {};
+    let valid = true;
+
+    FIELD_NAMES.forEach(name => {
+      const el  = document.getElementById('c-' + name);
+      const val = el ? parseFloat(el.value) : NaN;
+
+      if (el) el.classList.remove('is-invalid');
+
+      if (isNaN(val) || el.value.trim() === '') {
+        if (el) el.classList.add('is-invalid');
+        valid = false;
+      } else {
+        data[name] = val;
+      }
+    });
+
+    return valid ? data : null;
+  }
+
+  function setLoading(isLoading) {
+    if (isLoading) {
+      submitBtn.classList.add('is-loading');
+      submitBtn.querySelector('.btn-label').textContent = 'Classifying…';
+    } else {
+      submitBtn.classList.remove('is-loading');
+      submitBtn.querySelector('.btn-label').textContent = 'Classify Economy';
+    }
+  }
+
+  function showError(msg) { errorEl.textContent = msg; }
+  function clearError()   { errorEl.textContent = ''; }
+
+  /* Resolve a raw category string from the API (e.g. "Low", "Medium GDP",
+     "high income") to one of our three keys: 'low' | 'medium' | 'high'  */
+  function resolveCategory(raw) {
+    const s = (raw || '').toLowerCase();
+    if (s.includes('low'))    return 'low';
+    if (s.includes('medium') || s.includes('mid')) return 'medium';
+    if (s.includes('high'))   return 'high';
+    return null;
+  }
+
+  function showResult(categoryKey, modelName) {
+    const meta = CATEGORIES[categoryKey];
+    if (!meta) { showError('Unrecognised category: ' + categoryKey); return; }
+
+    /* Write content */
+    emojiEl.textContent  = meta.emoji;
+    labelEl.textContent  = meta.label;
+    rangeEl.textContent  = meta.range;
+    explanEl.textContent = meta.explanation;
+    modelEl.textContent  = 'Model used: ' + (modelName || 'Random Forest Classifier');
+
+    /* Reset colour classes, apply the right one */
+    resultCard.classList.remove('category-card--low', 'category-card--medium', 'category-card--high');
+    badgeEl.classList.remove('category-badge--low', 'category-badge--medium', 'category-badge--high');
+    resultCard.classList.add('category-card--' + meta.modifier);
+    badgeEl.classList.add('category-badge--' + meta.modifier);
+
+    /* Reveal card */
+    resultCard.removeAttribute('hidden');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resultCard.classList.add('is-visible'));
+    });
+
+    /* Smooth scroll to result */
+    setTimeout(() => {
+      const navbar = document.getElementById('navbar');
+      const offset = (navbar ? navbar.offsetHeight : 68) + 16;
+      const top    = resultCard.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }, 100);
+  }
+
+  function hideResult() {
+    resultCard.classList.remove('is-visible');
+    setTimeout(() => resultCard.setAttribute('hidden', ''), 400);
+  }
+
+  /* ── Autofill button ────────────────────────────────────── */
+  /* Copies values from the GDP predictor form (ids without "c-")
+     into the classifier form (ids with "c-").                  */
+  if (autofillBtn) {
+    autofillBtn.addEventListener('click', () => {
+      let copied = 0;
+      FIELD_NAMES.forEach(name => {
+        const src  = document.getElementById(name);          // predictor field
+        const dest = document.getElementById('c-' + name);  // classifier field
+        if (src && dest && src.value.trim() !== '') {
+          dest.value = src.value;
+          dest.classList.remove('is-invalid');
+          copied++;
+        }
+      });
+      if (copied === 0) {
+        autofillBtn.textContent = 'Predictor form is empty ↑';
+        setTimeout(() => { autofillBtn.textContent = 'Copy values from Predictor ↑'; }, 2500);
+      } else {
+        autofillBtn.textContent = `✓ Copied ${copied} values`;
+        setTimeout(() => { autofillBtn.textContent = 'Copy values from Predictor ↑'; }, 2000);
+      }
+    });
+  }
+
+  /* ── Form submit ────────────────────────────────────────── */
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearError();
+    hideResult();
+
+    const data = collectFormData();
+    if (!data) { showError('Please fill in all fields with valid numbers.'); return; }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE}/predict/gdp-category`, {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || `Server error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      /* FastAPI returns: { predicted_value (category string), model_used, ... } */
+      const key = resolveCategory(result.predicted_value);
+      if (!key) throw new Error('Unexpected category value: ' + result.predicted_value);
+      showResult(key, result.model_used);
+
+    } catch (err) {
+      showError('Could not reach the API. Is the FastAPI server running on port 8000?');
+      console.error('[Classifier]', err);
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  /* Clear invalid state on input */
+  FIELD_NAMES.forEach(name => {
+    const el = document.getElementById('c-' + name);
+    if (el) el.addEventListener('input', () => el.classList.remove('is-invalid'));
+  });
+
+})();

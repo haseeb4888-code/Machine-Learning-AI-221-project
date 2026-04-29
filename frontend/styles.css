@@ -1156,3 +1156,133 @@ button {
   .form-row-3 { grid-template-columns: 1fr; }
   .btn--lg { align-self: stretch; justify-content: center; }
 }
+
+/* ============================================================
+   CLASSIFIER — AUTOFILL BANNER
+   ============================================================ */
+.autofill-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: rgba(6, 182, 212, 0.06);
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  border-radius: var(--radius-lg);
+  flex-wrap: wrap;
+}
+
+.autofill-banner__text {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+/* Small button variant */
+.btn--sm {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  border-radius: var(--radius-md);
+}
+
+/* ============================================================
+   CATEGORY RESULT CARD
+   ============================================================ */
+.category-card {
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity   var(--duration-slow) var(--ease-out),
+    transform var(--duration-slow) var(--ease-out);
+  /* Border colour overridden per-category by JS */
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.category-card.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Per-category colour themes ─────────────────────────── */
+/* JS adds one of these modifier classes to .category-card  */
+
+.category-card--low {
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.category-card--medium {
+  background: rgba(245, 158, 11, 0.06);
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.category-card--high {
+  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+/* ── Badge pill ─────────────────────────────────────────── */
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  width: fit-content;
+  /* Background/border set per-category via modifier classes */
+  border: 2px solid transparent;
+  transition: background var(--duration-normal), border-color var(--duration-normal);
+}
+
+.category-badge--low {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #fca5a5;     /* red-300 */
+}
+
+.category-badge--medium {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #fcd34d;     /* amber-300 */
+}
+
+.category-badge--high {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #6ee7b7;     /* emerald-300 */
+}
+
+.category-badge__emoji { font-size: 1.6rem; line-height: 1; }
+.category-badge__label { font-size: var(--text-xl); font-weight: 800; }
+
+/* GDP range subtitle */
+.category-range {
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+/* Divider */
+.category-divider {
+  border: none;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Explanation paragraph */
+.category-explanation {
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: 1.75;
+}

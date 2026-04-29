@@ -384,10 +384,187 @@
 
     </section><!-- /predict-gdp -->
 
-    <section id="classify" class="placeholder-section">
-      <h2>Classify Country</h2>
-      <p>Coming soon…</p>
-    </section>
+    <!-- =================================================
+         SECTION 3 — GDP CATEGORY CLASSIFIER
+         ================================================= -->
+    <section id="classify" class="classifier-section" aria-labelledby="classifyTitle">
+
+      <!-- Section header -->
+      <div class="section-header">
+        <div class="section-tag">Classification Model</div>
+        <h2 class="section-title" id="classifyTitle">GDP Category Classifier</h2>
+        <p class="section-subtitle">
+          Classify a country's economy as <strong>Low</strong>,
+          <strong>Medium</strong>, or <strong>High</strong> GDP.
+          Auto-populate from the predictor, or enter values manually.
+        </p>
+      </div>
+
+      <!-- Classifier card -->
+      <div class="predictor-card">
+
+        <!-- Auto-populate banner -->
+        <div class="autofill-banner">
+          <div class="autofill-banner__text">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <path d="M9 2v14M2 9h14" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" opacity="0.5"/>
+              <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+            Already filled out the GDP Predictor?
+          </div>
+          <button type="button" class="btn btn--secondary btn--sm" id="classifyAutofillBtn">
+            Copy values from Predictor ↑
+          </button>
+        </div>
+
+        <form id="classifyForm" class="predictor-form" novalidate>
+
+          <!-- Same two-column grid as the GDP predictor -->
+          <div class="form-grid">
+            <div class="form-col">
+              <div class="form-group">
+                <label class="form-label" for="c-population">Population</label>
+                <input class="form-input" type="number" id="c-population" name="population"
+                       placeholder="e.g. 32900000" min="0" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="c-area">Area (sq. mi.)</label>
+                <input class="form-input" type="number" id="c-area" name="area"
+                       placeholder="e.g. 647500" min="0" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="c-pop_density">Pop. Density (per sq. mi.)</label>
+                <input class="form-input" type="number" id="c-pop_density" name="pop_density"
+                       placeholder="e.g. 48.0" min="0" step="0.1" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="c-coastline">Coastline (coast/area ratio)</label>
+                <input class="form-input" type="number" id="c-coastline" name="coastline"
+                       placeholder="e.g. 0.07" min="0" step="0.01" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="c-net_migration">Net Migration</label>
+                <input class="form-input" type="number" id="c-net_migration" name="net_migration"
+                       placeholder="e.g. 23.06" step="0.01" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="c-infant_mortality">Infant Mortality (per 1000)</label>
+                <input class="form-input" type="number" id="c-infant_mortality" name="infant_mortality"
+                       placeholder="e.g. 163.07" min="0" step="0.01" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="c-climate">Climate Zone (1–5)</label>
+                <input class="form-input" type="number" id="c-climate" name="climate"
+                       placeholder="e.g. 1" min="1" max="5" step="0.5" required />
+              </div>
+            </div>
+
+            <div class="form-col">
+              <div class="form-group">
+                <label class="form-label" for="c-literacy">Literacy (%)</label>
+                <input class="form-input" type="number" id="c-literacy" name="literacy"
+                       placeholder="e.g. 36.0" min="0" max="100" step="0.1" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="c-phones_per_1000">Phones (per 1000)</label>
+                <input class="form-input" type="number" id="c-phones_per_1000" name="phones_per_1000"
+                       placeholder="e.g. 3.2" min="0" step="0.1" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="c-arable">Arable Land (%)</label>
+                <input class="form-input" type="number" id="c-arable" name="arable"
+                       placeholder="e.g. 12.13" min="0" max="100" step="0.01" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="c-crops">Crops (%)</label>
+                <input class="form-input" type="number" id="c-crops" name="crops"
+                       placeholder="e.g. 0.22" min="0" max="100" step="0.01" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="c-other">Other Land (%)</label>
+                <input class="form-input" type="number" id="c-other" name="other"
+                       placeholder="e.g. 87.65" min="0" max="100" step="0.01" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="c-birthrate">Birthrate</label>
+                <input class="form-input" type="number" id="c-birthrate" name="birthrate"
+                       placeholder="e.g. 46.6" min="0" step="0.1" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="c-deathrate">Deathrate</label>
+                <input class="form-input" type="number" id="c-deathrate" name="deathrate"
+                       placeholder="e.g. 20.34" min="0" step="0.01" required />
+              </div>
+            </div>
+          </div><!-- /form-grid -->
+
+          <!-- Agriculture / Industry / Service row -->
+          <div class="form-row-3">
+            <div class="form-group">
+              <label class="form-label" for="c-agriculture">Agriculture (%)</label>
+              <input class="form-input" type="number" id="c-agriculture" name="agriculture"
+                     placeholder="e.g. 0.38" min="0" max="1" step="0.01" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="c-industry">Industry (%)</label>
+              <input class="form-input" type="number" id="c-industry" name="industry"
+                     placeholder="e.g. 0.24" min="0" max="1" step="0.01" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="c-service">Service (%)</label>
+              <input class="form-input" type="number" id="c-service" name="service"
+                     placeholder="e.g. 0.38" min="0" max="1" step="0.01" required />
+            </div>
+          </div>
+
+          <p class="form-error" id="classifyFormError" role="alert" aria-live="polite"></p>
+
+          <button type="submit" class="btn btn--primary btn--lg" id="classifySubmitBtn">
+            <span class="btn-label">Classify Economy</span>
+            <span class="btn-spinner" aria-hidden="true"></span>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"
+                 aria-hidden="true" class="btn-icon">
+              <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="2"/>
+              <path d="M6 9l2 2 4-4" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+        </form><!-- /classifyForm -->
+
+        <!-- Category result card — hidden until API responds -->
+        <div class="category-card" id="classifyResult" aria-live="polite" hidden>
+
+          <!-- Coloured badge: emoji + category name -->
+          <div class="category-badge" id="categoryBadge">
+            <span class="category-badge__emoji" id="categoryEmoji">🟢</span>
+            <span class="category-badge__label" id="categoryLabel">High GDP Economy</span>
+          </div>
+
+          <!-- Range line -->
+          <p class="category-range" id="categoryRange">&gt; $15,000 per capita</p>
+
+          <!-- Divider -->
+          <hr class="category-divider" />
+
+          <!-- Explanation text -->
+          <p class="category-explanation" id="categoryExplanation">
+            Countries in this tier typically have advanced infrastructure,
+            high human development indices, and diversified industrial
+            and service-based economies.
+          </p>
+
+          <!-- Model tag -->
+          <p class="result-card__model" id="classifyModelUsed">
+            Model used: Random Forest Classifier
+          </p>
+
+        </div><!-- /classifyResult -->
+
+      </div><!-- /predictor-card -->
+
+    </section><!-- /classify -->
 
     <section id="insights" class="placeholder-section">
       <h2>Model Insights</h2>
