@@ -141,6 +141,30 @@ class TrainingPipeline:
         
         return reg_manager
     
+    def train_classification_models_with_data(self, X_train, y_train_clf, X_test, y_test_clf):
+        """Train all classification models with provided data"""
+        print("\n" + "=" * 60)
+        print("🤖 TRAINING CLASSIFICATION MODELS")
+        print("=" * 60)
+        
+        clf_manager = ClassificationModelManager()
+        clf_manager.train_all_classifiers(X_train, y_train_clf, X_test, y_test_clf)
+        clf_manager.save_models()
+        
+        return clf_manager
+    
+    def train_regression_models_with_data(self, X_train, y_train_reg, X_test, y_test_reg):
+        """Train all regression models with provided data"""
+        print("\n" + "=" * 60)
+        print("📊 TRAINING REGRESSION MODELS")
+        print("=" * 60)
+        
+        reg_manager = RegressionModelManager()
+        reg_manager.train_all_regressors(X_train, y_train_reg, X_test, y_test_reg)
+        reg_manager.save_models()
+        
+        return reg_manager
+    
     def run_full_pipeline(self):
         """Execute complete training pipeline"""
         print("\n\n")
