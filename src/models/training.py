@@ -187,13 +187,48 @@ class TrainingPipeline:
         # Step 5: Train models
         clf_manager = self.train_classification_models()
         reg_manager = self.train_regression_models()
+        clust_manager = self.train_clustering_models()
         
         print("\n" + "=" * 60)
         print("✅ PIPELINE COMPLETE")
         print("=" * 60)
         print("\n🎉 All models trained and saved successfully!")
         
-        return clf_manager, reg_manager
+        return clf_manager, reg_manager,clust_manager
+    def train_clustering_models(self):
+        """Train all clustering models"""
+        print("\n" + "=" * 60)
+        print("🎯 TRAINING CLUSTERING MODELS")
+        print("=" * 60)
+        
+        # Select features for clustering (same as classification/regression)
+        feature_cols = [col for col in self.df.columns 
+                    if col not in ['Country', 'Region', 'GDP_Category', 'GDP ($ per capita)']]
+        
+        X = self.df[feature_cols]
+        
+        # Import and train clustering
+        from src.models.clustering_models import ClusteringModelManager
+        
+        clust_manager = ClusteringModelManager()
+        clust_manager.train_all_clustering(X, n_clusters=3)
+        clust_manager.save_models()
+        
+        return clust_manager
+
+    def train_clustering_models_with_data(self, X):
+        """Train clustering models with provided data"""
+        print("\n" + "=" * 60)
+        print("🎯 TRAINING CLUSTERING MODELS")
+        print("=" * 60)
+        
+        from src.models.clustering_models import ClusteringModelManager
+        
+        clust_manager = ClusteringModelManager()
+        clust_manager.train_all_clustering(X, n_clusters=3)
+        clust_manager.save_models()
+        
+        return clust_manager
 
 
 if __name__ == "__main__":

@@ -179,6 +179,29 @@ def train_regression_task(split_data: Dict) -> Dict:
     logger.info(f"✓ Regression complete - {metrics['regressors_trained']} models trained")
     return metrics
 
+@task(name="Train Clustering Models", retries=1)
+def train_clustering_task(split_data: Dict) -> Dict:
+    """Train all clustering models."""
+    logger = get_run_logger()
+    logger.info("Starting clustering model training")
+    
+    from src.models.clustering_models import ClusteringModelManager
+    
+    # Get features (same as classification/regression)
+    X = split_data['X_train']
+    
+    clust_manager = ClusteringModelManager()
+    clust_manager.train_all_clustering(X, n_clusters=3)
+    clust_manager.save_models()
+    
+    metrics = {
+        'clustering_models_trained': len(clust_manager.models),
+        'model_names': list(clust_manager.models.keys()),
+        'metrics': clust_manager.metrics
+    }
+    
+    logger.info(f"✓ Clustering complete - {metrics['clustering_models_trained']} models trained")
+    return metrics
 
 @task(name="Validate and Log Results")
 def validate_results_task(clf_metrics: Dict, reg_metrics: Dict) -> Dict:
@@ -237,7 +260,8 @@ def save_results_task(summary: Dict, output_dir: str = 'results') -> str:
 def ml_training_flow(
     data_path: str = 'countries of the world.csv',
     run_classification: bool = True,
-    run_regression: bool = True
+    run_regression: bool = True,
+    run_clustering: bool = True  
 ) -> Dict:
     """
     Main Prefect flow orchestrating the complete ML training pipeline.
@@ -249,21 +273,16 @@ def ml_training_flow(
     logger.info(f"🚀 Starting ML Training Pipeline - Run ID: {context.flow_run.id}")
     logger.info("=" * 70)
     
-    # Step 1: Load and Preprocess
+    # Steps 1-4: Same as before
     df, df_processed = load_preprocess_task(data_path)
-    
-    # Step 2: Feature Engineering
     df_engineered = engineer_features_task(df)
-    
-    # Step 3: Create Target Variable
     df_with_target = create_target_task(df_engineered)
-    
-    # Step 4: Prepare Train-Test Split
     split_data = prepare_split_task(df_with_target)
     
-    # Step 5 & 6: Train Models
+    # Step 5, 6, 7: Train all three model types
     clf_results = None
     reg_results = None
+    clust_results = None
     
     if run_classification:
         clf_results = train_classification_task(split_data)
@@ -271,18 +290,26 @@ def ml_training_flow(
     if run_regression:
         reg_results = train_regression_task(split_data)
     
-    # Step 7: Validate and Extract Summary
-    if clf_results and reg_results:
+    if run_clustering:  # ADD THIS
+        clust_results = train_clustering_task(split_data)
+    
+    # Step 8: Validate and Extract Summary
+    if clf_results and reg_results and clust_results:  # UPDATED
         summary = validate_results_task(clf_results, reg_results)
+        # Add clustering to summary
+        summary['clustering_trained'] = clust_results['clustering_models_trained']
+        summary['clustering_models'] = clust_results['model_names']
+        summary['clustering_metrics'] = clust_results['metrics']
     else:
         summary = {
             'timestamp': datetime.now().isoformat(),
             'status': 'partial',
             'classification_run': run_classification,
-            'regression_run': run_regression
+            'regression_run': run_regression,
+            'clustering_run': run_clustering
         }
     
-    # Step 8: Save results to disk
+    # Step 9: Save results to disk
     saved_file_path = save_results_task(summary)
     summary['saved_file_path'] = saved_file_path
     
@@ -321,7 +348,8 @@ if __name__ == "__main__":
     result = ml_training_flow(
         data_path='countries of the world.csv',
         run_classification=True,
-        run_regression=True
+        run_regression=True,
+        run_clustering=True  
     )
 
     print("\n" + "=" * 70)
@@ -330,6 +358,7 @@ if __name__ == "__main__":
     print(f"Status: {result.get('status', 'N/A')}")
     print(f"Classifiers Trained: {result.get('classifiers_trained', 0)}")
     print(f"Regressors Trained: {result.get('regressors_trained', 0)}")
+    print(f"Clustering Models Trained: {result.get('clustering_trained', 0)}")  # ADD THIS
     print(f"Timestamp: {result.get('timestamp', 'N/A')}")
     print(f"Results File: {result.get('saved_file_path', 'N/A')}")
     print("=" * 70)
