@@ -5,7 +5,9 @@ import numpy as np
 from pathlib import Path
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.svm import SVR
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
+import xgboost as xgb
 import pandas as pd
 
 
@@ -89,6 +91,60 @@ class RegressionModelManager:
         print(f"✓ Gradient Boosting - Train R²: {train_r2:.3f}, Test R²: {test_r2:.3f}, RMSE: {rmse:.2f}")
         return model
     
+    def train_xgboost_regressor(self, X_train, y_train, X_test, y_test):
+        """Train XGBoost Regressor"""
+        model = xgb.XGBRegressor(
+            n_estimators=100,
+            max_depth=6,
+            learning_rate=0.1,
+            random_state=42,
+            objective='reg:squarederror'
+        )
+        model.fit(X_train, y_train)
+        
+        y_pred_train = model.predict(X_train)
+        y_pred_test = model.predict(X_test)
+        
+        train_r2 = r2_score(y_train, y_pred_train)
+        test_r2 = r2_score(y_test, y_pred_test)
+        rmse = np.sqrt(mean_squared_error(y_test, y_pred_test))
+        mae = mean_absolute_error(y_test, y_pred_test)
+        
+        self.models['xgboost'] = model
+        self.metrics['xgboost'] = {
+            'train_r2': train_r2,
+            'test_r2': test_r2,
+            'rmse': rmse,
+            'mae': mae
+        }
+        
+        print(f"✓ XGBoost - Train R²: {train_r2:.3f}, Test R²: {test_r2:.3f}, RMSE: {rmse:.2f}")
+        return model
+    
+    def train_svm_regressor(self, X_train, y_train, X_test, y_test):
+        """Train Support Vector Machine Regressor"""
+        model = SVR(kernel='rbf', C=100.0, gamma='scale')
+        model.fit(X_train, y_train)
+        
+        y_pred_train = model.predict(X_train)
+        y_pred_test = model.predict(X_test)
+        
+        train_r2 = r2_score(y_train, y_pred_train)
+        test_r2 = r2_score(y_test, y_pred_test)
+        rmse = np.sqrt(mean_squared_error(y_test, y_pred_test))
+        mae = mean_absolute_error(y_test, y_pred_test)
+        
+        self.models['svm'] = model
+        self.metrics['svm'] = {
+            'train_r2': train_r2,
+            'test_r2': test_r2,
+            'rmse': rmse,
+            'mae': mae
+        }
+        
+        print(f"✓ SVM - Train R²: {train_r2:.3f}, Test R²: {test_r2:.3f}, RMSE: {rmse:.2f}")
+        return model
+    
     def train_all_regressors(self, X_train, y_train, X_test, y_test):
         """Train all regression models"""
         print("\n📊 Training regression models...\n")
@@ -96,6 +152,8 @@ class RegressionModelManager:
         self.train_linear_regression(X_train, y_train, X_test, y_test)
         self.train_random_forest_regressor(X_train, y_train, X_test, y_test)
         self.train_gradient_boosting(X_train, y_train, X_test, y_test)
+        self.train_xgboost_regressor(X_train, y_train, X_test, y_test)
+        self.train_svm_regressor(X_train, y_train, X_test, y_test)
         
         return self.models
     

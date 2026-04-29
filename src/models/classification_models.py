@@ -8,7 +8,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import xgboost as xgb
 import pandas as pd
 
 
@@ -72,6 +74,47 @@ class ClassificationModelManager:
         print(f"✓ KNN - Train Acc: {train_acc:.3f}, Test Acc: {test_acc:.3f}")
         return model
     
+    def train_xgboost_classifier(self, X_train, y_train, X_test, y_test):
+        """Train XGBoost classifier"""
+        model = xgb.XGBClassifier(
+            n_estimators=100,
+            max_depth=6,
+            learning_rate=0.1,
+            random_state=42,
+            use_label_encoder=False,
+            eval_metric='mlogloss'
+        )
+        model.fit(X_train, y_train)
+        
+        train_acc = model.score(X_train, y_train)
+        test_acc = model.score(X_test, y_test)
+        
+        self.models['xgboost'] = model
+        self.metrics['xgboost'] = {
+            'train_accuracy': train_acc,
+            'test_accuracy': test_acc,
+        }
+        
+        print(f"✓ XGBoost - Train Acc: {train_acc:.3f}, Test Acc: {test_acc:.3f}")
+        return model
+    
+    def train_svm(self, X_train, y_train, X_test, y_test):
+        """Train Support Vector Machine classifier"""
+        model = SVC(kernel='rbf', C=1.0, gamma='scale', random_state=42)
+        model.fit(X_train, y_train)
+        
+        train_acc = model.score(X_train, y_train)
+        test_acc = model.score(X_test, y_test)
+        
+        self.models['svm'] = model
+        self.metrics['svm'] = {
+            'train_accuracy': train_acc,
+            'test_accuracy': test_acc,
+        }
+        
+        print(f"✓ SVM - Train Acc: {train_acc:.3f}, Test Acc: {test_acc:.3f}")
+        return model
+    
     def train_all_classifiers(self, X_train, y_train, X_test, y_test):
         """Train all classification models"""
         print("\n🤖 Training classification models...\n")
@@ -79,6 +122,8 @@ class ClassificationModelManager:
         self.train_logistic_regression(X_train, y_train, X_test, y_test)
         self.train_random_forest(X_train, y_train, X_test, y_test)
         self.train_knn(X_train, y_train, X_test, y_test)
+        self.train_xgboost_classifier(X_train, y_train, X_test, y_test)
+        self.train_svm(X_train, y_train, X_test, y_test)
         
         return self.models
     
