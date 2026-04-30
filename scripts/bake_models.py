@@ -8,10 +8,7 @@ from src.models.regression_models import RegressionModelManager
 
 
 def find_dataset_path() -> Path | None:
-    candidates = [
-        Path("Old-Version") / "countries of the world.csv",
-        Path("old-Version") / "countries of the world.csv",
-    ]
+    candidates = [Path("countries of the world.csv")]
     print("Dataset candidates:", [str(p) for p in candidates])
     return next((p for p in candidates if p.exists()), None)
 

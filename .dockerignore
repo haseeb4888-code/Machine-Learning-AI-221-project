@@ -17,6 +17,7 @@ env/
 .ipynb_checkpoints/
 
 # Keep dataset + models in build context
+!countries of the world.csv
 !Old-Version/
 !Old-Version/countries of the world.csv
 !models/
