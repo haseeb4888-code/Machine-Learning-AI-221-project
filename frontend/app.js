@@ -417,11 +417,12 @@
   /* ── Field names expected by the FastAPI /predict/gdp endpoint ── */
   const FIELD_NAMES = [
     'population', 'area', 'pop_density', 'coastline',
-    'net_migration', 'infant_mortality', 'literacy',
-    'phones_per_1000', 'arable', 'crops', 'other',
+    'net_migration', 'infant_mortality', 'gdp_per_capita',
+    'literacy', 'phones_per_1000', 'arable', 'crops', 'other',
     'climate', 'birthrate', 'deathrate',
     'agriculture', 'industry', 'service'
   ];
+  const REGION_ID = 'region';   // string field handled separately
 
   /* ── Helpers ────────────────────────────────────────────── */
 
@@ -444,6 +445,16 @@
         data[name] = val;
       }
     });
+
+    // region is a required string field
+    const regionEl = document.getElementById(REGION_ID);
+    if (regionEl) regionEl.classList.remove('is-invalid');
+    if (!regionEl || regionEl.value.trim() === '') {
+      if (regionEl) regionEl.classList.add('is-invalid');
+      valid = false;
+    } else {
+      data['region'] = regionEl.value.trim();
+    }
 
     return valid ? data : null;
   }
@@ -584,15 +595,16 @@
 
   const API_BASE = 'http://localhost:8000';
 
-  /* Field names — same 17 as the GDP predictor, but IDs are
+  /* Field names — same 18 as the GDP predictor, but IDs are
      prefixed with "c-" to avoid colliding with predictor inputs */
   const FIELD_NAMES = [
     'population', 'area', 'pop_density', 'coastline',
-    'net_migration', 'infant_mortality', 'literacy',
-    'phones_per_1000', 'arable', 'crops', 'other',
+    'net_migration', 'infant_mortality', 'gdp_per_capita',
+    'literacy', 'phones_per_1000', 'arable', 'crops', 'other',
     'climate', 'birthrate', 'deathrate',
     'agriculture', 'industry', 'service'
   ];
+  const REGION_ID = 'c-region';  // string field handled separately
 
   /* ── Category metadata ──────────────────────────────────── */
   /* Each category the API can return maps to a colour theme,
@@ -649,6 +661,16 @@
         data[name] = val;
       }
     });
+
+    // region string field
+    const regionEl = document.getElementById(REGION_ID);
+    if (regionEl) regionEl.classList.remove('is-invalid');
+    if (!regionEl || regionEl.value.trim() === '') {
+      if (regionEl) regionEl.classList.add('is-invalid');
+      valid = false;
+    } else {
+      data['region'] = regionEl.value.trim();
+    }
 
     return valid ? data : null;
   }
@@ -728,6 +750,14 @@
           copied++;
         }
       });
+      // Also copy the region dropdown
+      const srcRegion  = document.getElementById('region');
+      const destRegion = document.getElementById('c-region');
+      if (srcRegion && destRegion && srcRegion.value) {
+        destRegion.value = srcRegion.value;
+        destRegion.classList.remove('is-invalid');
+        copied++;
+      }
       if (copied === 0) {
         autofillBtn.textContent = 'Predictor form is empty ↑';
         setTimeout(() => { autofillBtn.textContent = 'Copy values from Predictor ↑'; }, 2500);
@@ -762,9 +792,9 @@
       }
 
       const result = await response.json();
-      /* FastAPI returns: { predicted_value (category string), model_used, ... } */
-      const key = resolveCategory(result.predicted_value);
-      if (!key) throw new Error('Unexpected category value: ' + result.predicted_value);
+      /* FastAPI /predict/gdp-category returns { predicted_category, model_used, ... } */
+      const key = resolveCategory(result.predicted_category);
+      if (!key) throw new Error('Unexpected category value: ' + result.predicted_category);
       showResult(key, result.model_used);
 
     } catch (err) {
@@ -778,6 +808,219 @@
   /* Clear invalid state on input */
   FIELD_NAMES.forEach(name => {
     const el = document.getElementById('c-' + name);
+    if (el) el.addEventListener('input', () => el.classList.remove('is-invalid'));
+  });
+
+})();
+
+
+/* ============================================================
+   COUNTRY CLUSTER ANALYSIS — KMeans via /analyze/clusters
+   ============================================================ */
+(function () {
+  'use strict';
+
+  const API_BASE = 'http://localhost:8000';
+
+  /* ── Element references ────────────────────────────────── */
+  const form         = document.getElementById('clusterForm');
+  const submitBtn    = document.getElementById('clusterSubmitBtn');
+  const errorEl      = document.getElementById('clusterFormError');
+  const resultCard   = document.getElementById('clusterResult');
+  const clusterIdEl  = document.getElementById('clusterIdEl');
+  const clusterNameEl= document.getElementById('clusterNameEl');
+  const clusterDescEl= document.getElementById('clusterDescEl');
+  const clusterSilEl = document.getElementById('clusterSilhouetteEl');
+  const clusterModEl = document.getElementById('clusterModelEl');
+  const autofillBtn  = document.getElementById('clusterAutofillBtn');
+
+  /* Stats bar elements */
+  const csClusterEl   = document.querySelector('#cs-clusters .cluster-stat-item__value');
+  const csSilEl       = document.querySelector('#cs-silhouette .cluster-stat-item__value');
+  const csDaviesEl    = document.querySelector('#cs-davies .cluster-stat-item__value');
+
+  if (!form) return;
+
+  /* Field names — prefixed with "k-" in HTML */
+  const FIELD_NAMES = [
+    'population', 'area', 'pop_density', 'coastline',
+    'net_migration', 'infant_mortality', 'gdp_per_capita',
+    'literacy', 'phones_per_1000', 'arable', 'crops', 'other',
+    'climate', 'birthrate', 'deathrate',
+    'agriculture', 'industry', 'service'
+  ];
+  const REGION_ID = 'k-region';
+
+  /* ── Load cluster summary on page load ─────────────────── */
+  async function loadClusterSummary() {
+    try {
+      const res = await fetch(`${API_BASE}/analyze/clusters/summary`);
+      if (!res.ok) return;  // silently skip if API not running
+      const data = await res.json();
+
+      if (csClusterEl)  csClusterEl.textContent  = data.n_clusters ?? '—';
+      if (csSilEl)      csSilEl.textContent       = data.silhouette_score != null
+                                                    ? data.silhouette_score.toFixed(3) : '—';
+      if (csDaviesEl)   csDaviesEl.textContent    = data.davies_bouldin_score != null
+                                                    ? data.davies_bouldin_score.toFixed(3) : '—';
+    } catch (_) { /* API not running — leave dashes */ }
+  }
+
+  loadClusterSummary();
+
+  /* ── Helpers ────────────────────────────────────────────── */
+  function collectFormData() {
+    const data = {};
+    let valid = true;
+
+    FIELD_NAMES.forEach(name => {
+      const el  = document.getElementById('k-' + name);
+      const val = el ? parseFloat(el.value) : NaN;
+      if (el) el.classList.remove('is-invalid');
+      if (isNaN(val) || !el || el.value.trim() === '') {
+        if (el) el.classList.add('is-invalid');
+        valid = false;
+      } else {
+        data[name] = val;
+      }
+    });
+
+    const regionEl = document.getElementById(REGION_ID);
+    if (regionEl) regionEl.classList.remove('is-invalid');
+    if (!regionEl || !regionEl.value) {
+      if (regionEl) regionEl.classList.add('is-invalid');
+      valid = false;
+    } else {
+      data['region'] = regionEl.value;
+    }
+
+    return valid ? data : null;
+  }
+
+  function setLoading(on) {
+    if (on) {
+      submitBtn.classList.add('is-loading');
+      submitBtn.querySelector('.btn-label').textContent = 'Analysing…';
+    } else {
+      submitBtn.classList.remove('is-loading');
+      submitBtn.querySelector('.btn-label').textContent = 'Find My Cluster';
+    }
+  }
+
+  function showError(msg) { errorEl.textContent = msg; }
+  function clearError()   { errorEl.textContent = ''; }
+
+  function showResult(data) {
+    /* data: { cluster_assignment, cluster_name, model_used, silhouette_score } */
+    clusterIdEl.textContent   = data.cluster_assignment ?? '?';
+    clusterNameEl.textContent = data.cluster_name       || 'Unknown Cluster';
+    clusterDescEl.textContent = getClusterDesc(data.cluster_assignment, data.cluster_name);
+    clusterSilEl.textContent  = data.silhouette_score != null
+      ? 'Silhouette: ' + data.silhouette_score.toFixed(3) : 'Silhouette: N/A';
+    clusterModEl.textContent  = 'Model: ' + (data.model_used || 'KMeans');
+
+    resultCard.removeAttribute('hidden');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resultCard.classList.add('is-visible'));
+    });
+
+    setTimeout(() => {
+      const navbar = document.getElementById('navbar');
+      const offset = (navbar ? navbar.offsetHeight : 68) + 16;
+      const top = resultCard.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }, 100);
+  }
+
+  function hideResult() {
+    resultCard.classList.remove('is-visible');
+    setTimeout(() => resultCard.setAttribute('hidden', ''), 400);
+  }
+
+  /* Human-readable description for each cluster */
+  function getClusterDesc(id, name) {
+    const n = (name || '').toLowerCase();
+    if (n.includes('develop') && !n.includes('emerging'))
+      return 'Developing economies typically have high population growth, '
+           + 'lower literacy rates, higher infant mortality, and rely '
+           + 'heavily on agriculture. They represent significant growth potential.';
+    if (n.includes('emerg') || n.includes('market'))
+      return 'Emerging market economies are in active transition, showing '
+           + 'rising industrialisation, improving infrastructure, and '
+           + 'growing middle-class consumption alongside persistent inequality.';
+    if (n.includes('develop') || n.includes('nation') || n.includes('rich'))
+      return 'Developed nations feature high GDP per capita, advanced '
+           + 'infrastructure, high literacy, diversified service economies, '
+           + 'and strong institutional frameworks.';
+    return 'This cluster groups countries with similar socioeconomic profiles '
+         + 'across indicators such as GDP, literacy, birthrate, and land use.';
+  }
+
+  /* ── Autofill from predictor ───────────────────────────── */
+  if (autofillBtn) {
+    autofillBtn.addEventListener('click', () => {
+      let copied = 0;
+      FIELD_NAMES.forEach(name => {
+        const src  = document.getElementById(name);
+        const dest = document.getElementById('k-' + name);
+        if (src && dest && src.value.trim() !== '') {
+          dest.value = src.value;
+          dest.classList.remove('is-invalid');
+          copied++;
+        }
+      });
+      const srcReg  = document.getElementById('region');
+      const destReg = document.getElementById('k-region');
+      if (srcReg && destReg && srcReg.value) {
+        destReg.value = srcReg.value;
+        destReg.classList.remove('is-invalid');
+        copied++;
+      }
+      autofillBtn.textContent = copied
+        ? `✓ Copied ${copied} values`
+        : 'Predictor form is empty ↑';
+      setTimeout(() => { autofillBtn.textContent = 'Copy values from Predictor ↑'; }, 2000);
+    });
+  }
+
+  /* ── Form submit ───────────────────────────────────────── */
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearError();
+    hideResult();
+
+    const data = collectFormData();
+    if (!data) { showError('Please fill in all fields with valid values.'); return; }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/analyze/clusters`, {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Server error: ${res.status}`);
+      }
+
+      const result = await res.json();
+      /* ClusteringResponse: { cluster_assignment, cluster_name, model_used,
+                               silhouette_score, input_features }            */
+      showResult(result);
+
+    } catch (err) {
+      showError('Could not reach the API. Is the FastAPI server running on port 8000?');
+      console.error('[Clustering]', err);
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  /* Clear invalid state on input */
+  FIELD_NAMES.forEach(name => {
+    const el = document.getElementById('k-' + name);
     if (el) el.addEventListener('input', () => el.classList.remove('is-invalid'));
   });
 
