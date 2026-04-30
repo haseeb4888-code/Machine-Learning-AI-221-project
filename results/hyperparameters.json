@@ -1,0 +1,32 @@
+{
+    "logistic_regression": {
+        "C": 4.5705630998014515,
+        "max_iter": 1238
+    },
+    "random_forest_clf": {
+        "n_estimators": 337,
+        "max_depth": 5,
+        "min_samples_split": 7,
+        "min_samples_leaf": 1
+    },
+    "xgboost_clf": {
+        "n_estimators": 162,
+        "max_depth": 3,
+        "learning_rate": 0.19030368381735815,
+        "subsample": 0.8404460046972835,
+        "colsample_bytree": 0.8832290311184181
+    },
+    "random_forest_reg": {
+        "n_estimators": 282,
+        "max_depth": 17,
+        "min_samples_split": 3,
+        "min_samples_leaf": 3
+    },
+    "xgboost_reg": {
+        "n_estimators": 345,
+        "max_depth": 4,
+        "learning_rate": 0.027010527749605478,
+        "subsample": 0.7465447373174767,
+        "colsample_bytree": 0.7824279936868144
+    }
+}

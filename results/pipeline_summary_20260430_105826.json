@@ -1,0 +1,118 @@
+{
+    "timestamp": "2026-04-30T10:58:25.769697",
+    "classifiers_trained": 7,
+    "regressors_trained": 6,
+    "clf_models": [
+        "logistic_regression",
+        "random_forest",
+        "knn",
+        "xgboost",
+        "svm",
+        "gaussian_naive_bayes",
+        "mlp"
+    ],
+    "reg_models": [
+        "linear_regression",
+        "random_forest",
+        "gradient_boosting",
+        "xgboost",
+        "svm",
+        "mlp"
+    ],
+    "clf_metrics": {
+        "logistic_regression": {
+            "train_accuracy": 0.856353591160221,
+            "test_accuracy": 0.8695652173913043
+        },
+        "random_forest": {
+            "train_accuracy": 1.0,
+            "test_accuracy": 0.8695652173913043
+        },
+        "knn": {
+            "train_accuracy": 0.6298342541436464,
+            "test_accuracy": 0.391304347826087
+        },
+        "xgboost": {
+            "train_accuracy": 1.0,
+            "test_accuracy": 0.8913043478260869
+        },
+        "svm": {
+            "train_accuracy": 0.46408839779005523,
+            "test_accuracy": 0.45652173913043476
+        },
+        "gaussian_naive_bayes": {
+            "train_accuracy": 0.5966850828729282,
+            "test_accuracy": 0.5652173913043478
+        },
+        "mlp": {
+            "train_accuracy": 0.3701657458563536,
+            "test_accuracy": 0.2608695652173913
+        }
+    },
+    "reg_metrics": {
+        "linear_regression": {
+            "train_r2": 0.9395528874747717,
+            "test_r2": 0.7239792044658606,
+            "rmse": 5305.505443183528,
+            "mae": 3181.565438574409
+        },
+        "random_forest": {
+            "train_r2": 0.9882231147856861,
+            "test_r2": 0.9410874282098319,
+            "rmse": 2451.093361954002,
+            "mae": 1558.5178914967296
+        },
+        "gradient_boosting": {
+            "train_r2": 0.999998434876002,
+            "test_r2": 0.9492608287109516,
+            "rmse": 2274.7179132597107,
+            "mae": 1257.3906769176187
+        },
+        "xgboost": {
+            "train_r2": 0.9999859187119761,
+            "test_r2": 0.9395426932753845,
+            "rmse": 2483.020247027637,
+            "mae": 1562.6592714750755
+        },
+        "svm": {
+            "train_r2": -0.16139881885282858,
+            "test_r2": -0.2535089322602999,
+            "rmse": 11306.27590634025,
+            "mae": 7937.146188656555
+        },
+        "mlp": {
+            "train_r2": -2034.3767555621257,
+            "test_r2": -342.6908235084455,
+            "rmse": 187214.65035946155,
+            "mae": 85530.16536673174
+        }
+    },
+    "status": "success",
+    "clustering_trained": 3,
+    "clustering_models": [
+        "kmeans",
+        "hierarchical",
+        "dbscan"
+    ],
+    "clustering_metrics": {
+        "kmeans": {
+            "n_clusters": 3,
+            "silhouette_score": 0.8160340984849381,
+            "davies_bouldin_score": 0.4067357052461928,
+            "inertia": 8.286863643937122e+16
+        },
+        "hierarchical": {
+            "n_clusters": 3,
+            "silhouette_score": 0.86729792777455,
+            "davies_bouldin_score": 0.278536949515294
+        },
+        "dbscan": {
+            "n_clusters": 0,
+            "n_noise_points": 181,
+            "silhouette_score": -1,
+            "davies_bouldin_score": -1,
+            "eps": 0.5,
+            "min_samples": 5
+        }
+    }
+}

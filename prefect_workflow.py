@@ -136,46 +136,82 @@ def prepare_split_task(df: pd.DataFrame) -> Dict:
     return split_info
 
 
+@task(name="Hyperparameter Tuning (Optuna - Sequential)")
+def tune_hyperparameters_task(
+    split_data: Dict,
+    n_trials: int = 10,
+    timeout: int = 300,
+    seed: int = 42,
+) -> Dict:
+    """Tune hyperparameters for selected models using Optuna (sequential)."""
+    logger = get_run_logger()
+    logger.info("Starting hyperparameter tuning with Optuna (sequential)")
+
+    from src.models.hyperparameter_tuning import HyperparameterTuner
+
+    tuner = HyperparameterTuner(n_trials=n_trials, timeout=timeout, seed=seed)
+
+    # Classification tuning
+    tuner.tune_logistic_regression(split_data['X_train'], split_data['y_train_clf'])
+    tuner.tune_random_forest_classifier(split_data['X_train'], split_data['y_train_clf'])
+    tuner.tune_xgboost_classifier(split_data['X_train'], split_data['y_train_clf'])
+
+    # Regression tuning
+    tuner.tune_random_forest_regressor(split_data['X_train'], split_data['y_train_reg'])
+    tuner.tune_xgboost_regressor(split_data['X_train'], split_data['y_train_reg'])
+
+    out_path = Path("results") / "hyperparameters.json"
+    tuner.save_best_params(out_path)
+
+    logger.info("✓ Hyperparameter tuning complete")
+    return {"tuned_params": tuner.get_all_best_params()}
+
 @task(name="Train Classification Models", retries=1)
-def train_classification_task(split_data: Dict) -> Dict:
+def train_classification_task(split_data: Dict, tuned_params: Dict | None = None) -> Dict:
     """Train all classification models."""
     logger = get_run_logger()
     logger.info("Starting classification model training")
-    
+
     pipeline = TrainingPipeline()
     clf_manager = pipeline.train_classification_models_with_data(
-        split_data['X_train'], split_data['y_train_clf'],
-        split_data['X_test'], split_data['y_test_clf']
+        split_data['X_train'],
+        split_data['y_train_clf'],
+        split_data['X_test'],
+        split_data['y_test_clf'],
+        tuned_params=tuned_params,
     )
-    
+
     metrics = {
         'classifiers_trained': len(clf_manager.models),
         'model_names': list(clf_manager.models.keys()),
         'metrics': clf_manager.metrics
     }
-    
+
     logger.info(f"✓ Classification complete - {metrics['classifiers_trained']} models trained")
     return metrics
 
 
 @task(name="Train Regression Models", retries=1)
-def train_regression_task(split_data: Dict) -> Dict:
+def train_regression_task(split_data: Dict, tuned_params: Dict | None = None) -> Dict:
     """Train all regression models."""
     logger = get_run_logger()
     logger.info("Starting regression model training")
-    
+
     pipeline = TrainingPipeline()
     reg_manager = pipeline.train_regression_models_with_data(
-        split_data['X_train'], split_data['y_train_reg'],
-        split_data['X_test'], split_data['y_test_reg']
+        split_data['X_train'],
+        split_data['y_train_reg'],
+        split_data['X_test'],
+        split_data['y_test_reg'],
+        tuned_params=tuned_params,
     )
-    
+
     metrics = {
         'regressors_trained': len(reg_manager.models),
         'model_names': list(reg_manager.models.keys()),
         'metrics': reg_manager.metrics
     }
-    
+
     logger.info(f"✓ Regression complete - {metrics['regressors_trained']} models trained")
     return metrics
 
@@ -278,18 +314,27 @@ def ml_training_flow(
     df_engineered = engineer_features_task(df)
     df_with_target = create_target_task(df_engineered)
     split_data = prepare_split_task(df_with_target)
-    
-    # Step 5, 6, 7: Train all three model types
+
+    # Step 5: Hyperparameter tuning BEFORE final training (sequential)
+    hp_tuning_results = None
+    if run_classification or run_regression:
+        hp_tuning_results = tune_hyperparameters_task(split_data)
+
+    tuned_params = None
+    if hp_tuning_results:
+        tuned_params = hp_tuning_results.get("tuned_params")
+
+    # Step 6, 7, 8: Train all three model types
     clf_results = None
     reg_results = None
     clust_results = None
-    
+
     if run_classification:
-        clf_results = train_classification_task(split_data)
-    
+        clf_results = train_classification_task(split_data, tuned_params=tuned_params)
+
     if run_regression:
-        reg_results = train_regression_task(split_data)
-    
+        reg_results = train_regression_task(split_data, tuned_params=tuned_params)
+
     if run_clustering:  # ADD THIS
         clust_results = train_clustering_task(split_data)
     
@@ -308,6 +353,9 @@ def ml_training_flow(
             'regression_run': run_regression,
             'clustering_run': run_clustering
         }
+
+    if tuned_params:
+        summary['tuned_params'] = tuned_params
     
     # Step 9: Save results to disk
     saved_file_path = save_results_task(summary)

@@ -20,3 +20,6 @@ joblib==1.3.0
 
 # Workflow Orchestration
 prefect>=2.14.0
+
+# Hyperparameter Tuning
+optuna==3.4.0

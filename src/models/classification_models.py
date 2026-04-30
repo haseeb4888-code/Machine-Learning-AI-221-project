@@ -24,9 +24,19 @@ class ClassificationModelManager:
         self.metrics = {}
         self.category_labels = ['Low', 'Medium', 'High']
     
-    def train_logistic_regression(self, X_train, y_train, X_test, y_test):
-        """Train Logistic Regression classifier"""
-        model = LogisticRegression(max_iter=1000, random_state=42)
+    def train_logistic_regression(self, X_train, y_train, X_test, y_test, params=None):
+        """Train Logistic Regression classifier.
+
+        params (optional): tuned hyperparameters from Optuna.
+        """
+        tuned = params or {}
+        model = LogisticRegression(
+            C=tuned.get("C", 1.0),
+            max_iter=tuned.get("max_iter", 1000),
+            solver="lbfgs",
+            penalty="l2",
+            random_state=42,
+        )
         model.fit(X_train, y_train)
         
         train_acc = model.score(X_train, y_train)
@@ -36,14 +46,25 @@ class ClassificationModelManager:
         self.metrics['logistic_regression'] = {
             'train_accuracy': train_acc,
             'test_accuracy': test_acc,
+            'hyperparameters': tuned,
         }
         
         print(f"✓ Logistic Regression - Train Acc: {train_acc:.3f}, Test Acc: {test_acc:.3f}")
         return model
     
-    def train_random_forest(self, X_train, y_train, X_test, y_test):
-        """Train Random Forest classifier"""
-        model = RandomForestClassifier(n_estimators=100, max_depth=15, random_state=42)
+    def train_random_forest(self, X_train, y_train, X_test, y_test, params=None):
+        """Train Random Forest classifier.
+
+        params (optional): tuned hyperparameters from Optuna.
+        """
+        tuned = params or {}
+        model = RandomForestClassifier(
+            n_estimators=tuned.get("n_estimators", 100),
+            max_depth=tuned.get("max_depth", 15),
+            min_samples_split=tuned.get("min_samples_split", 2),
+            min_samples_leaf=tuned.get("min_samples_leaf", 1),
+            random_state=42,
+        )
         model.fit(X_train, y_train)
         
         train_acc = model.score(X_train, y_train)
@@ -53,6 +74,7 @@ class ClassificationModelManager:
         self.metrics['random_forest'] = {
             'train_accuracy': train_acc,
             'test_accuracy': test_acc,
+            'hyperparameters': tuned,
         }
         
         print(f"✓ Random Forest - Train Acc: {train_acc:.3f}, Test Acc: {test_acc:.3f}")
@@ -75,12 +97,18 @@ class ClassificationModelManager:
         print(f"✓ KNN - Train Acc: {train_acc:.3f}, Test Acc: {test_acc:.3f}")
         return model
     
-    def train_xgboost_classifier(self, X_train, y_train, X_test, y_test):
-        """Train XGBoost classifier"""
+    def train_xgboost_classifier(self, X_train, y_train, X_test, y_test, params=None):
+        """Train XGBoost classifier.
+
+        params (optional): tuned hyperparameters from Optuna.
+        """
+        tuned = params or {}
         model = xgb.XGBClassifier(
-            n_estimators=100,
-            max_depth=6,
-            learning_rate=0.1,
+            n_estimators=tuned.get("n_estimators", 100),
+            max_depth=tuned.get("max_depth", 6),
+            learning_rate=tuned.get("learning_rate", 0.1),
+            subsample=tuned.get("subsample", 1.0),
+            colsample_bytree=tuned.get("colsample_bytree", 1.0),
             random_state=42,
             use_label_encoder=False,
             eval_metric='mlogloss'
@@ -94,6 +122,7 @@ class ClassificationModelManager:
         self.metrics['xgboost'] = {
             'train_accuracy': train_acc,
             'test_accuracy': test_acc,
+            'hyperparameters': tuned,
         }
         
         print(f"✓ XGBoost - Train Acc: {train_acc:.3f}, Test Acc: {test_acc:.3f}")
@@ -158,14 +187,25 @@ class ClassificationModelManager:
         print(f"✓ MLP Classifier - Train Acc: {train_acc:.3f}, Test Acc: {test_acc:.3f}")
         return model
     
-    def train_all_classifiers(self, X_train, y_train, X_test, y_test):
-        """Train all classification models"""
+    def train_all_classifiers(self, X_train, y_train, X_test, y_test, tuned_params: dict | None = None):
+        """Train all classification models.
+
+        tuned_params: optional Optuna best params dict. Keys come from
+        src/models/hyperparameter_tuning.py, and are mapped to the models here.
+        """
         print("\n🤖 Training classification models...\n")
-        
-        self.train_logistic_regression(X_train, y_train, X_test, y_test)
-        self.train_random_forest(X_train, y_train, X_test, y_test)
+
+        tuned_params = tuned_params or {}
+        self.train_logistic_regression(
+            X_train, y_train, X_test, y_test, params=tuned_params.get("logistic_regression")
+        )
+        self.train_random_forest(
+            X_train, y_train, X_test, y_test, params=tuned_params.get("random_forest_clf")
+        )
         self.train_knn(X_train, y_train, X_test, y_test)
-        self.train_xgboost_classifier(X_train, y_train, X_test, y_test)
+        self.train_xgboost_classifier(
+            X_train, y_train, X_test, y_test, params=tuned_params.get("xgboost_clf")
+        )
         self.train_svm(X_train, y_train, X_test, y_test)
         self.train_gaussian_naive_bayes(X_train, y_train, X_test, y_test)
         self.train_mlp_classifier(X_train, y_train, X_test, y_test)

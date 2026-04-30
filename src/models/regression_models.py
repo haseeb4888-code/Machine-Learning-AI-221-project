@@ -44,9 +44,19 @@ class RegressionModelManager:
         print(f"✓ Linear Regression - Train R²: {train_r2:.3f}, Test R²: {test_r2:.3f}, RMSE: {rmse:.2f}")
         return model
     
-    def train_random_forest_regressor(self, X_train, y_train, X_test, y_test):
-        """Train Random Forest Regressor"""
-        model = RandomForestRegressor(n_estimators=100, max_depth=15, random_state=42)
+    def train_random_forest_regressor(self, X_train, y_train, X_test, y_test, params=None):
+        """Train Random Forest Regressor.
+
+        params (optional): tuned hyperparameters from Optuna.
+        """
+        tuned = params or {}
+        model = RandomForestRegressor(
+            n_estimators=tuned.get("n_estimators", 100),
+            max_depth=tuned.get("max_depth", 15),
+            min_samples_split=tuned.get("min_samples_split", 2),
+            min_samples_leaf=tuned.get("min_samples_leaf", 1),
+            random_state=42,
+        )
         model.fit(X_train, y_train)
         
         y_pred_train = model.predict(X_train)
@@ -62,7 +72,8 @@ class RegressionModelManager:
             'train_r2': train_r2,
             'test_r2': test_r2,
             'rmse': rmse,
-            'mae': mae
+            'mae': mae,
+            'hyperparameters': tuned,
         }
         
         print(f"✓ Random Forest - Train R²: {train_r2:.3f}, Test R²: {test_r2:.3f}, RMSE: {rmse:.2f}")
@@ -92,12 +103,18 @@ class RegressionModelManager:
         print(f"✓ Gradient Boosting - Train R²: {train_r2:.3f}, Test R²: {test_r2:.3f}, RMSE: {rmse:.2f}")
         return model
     
-    def train_xgboost_regressor(self, X_train, y_train, X_test, y_test):
-        """Train XGBoost Regressor"""
+    def train_xgboost_regressor(self, X_train, y_train, X_test, y_test, params=None):
+        """Train XGBoost Regressor.
+
+        params (optional): tuned hyperparameters from Optuna.
+        """
+        tuned = params or {}
         model = xgb.XGBRegressor(
-            n_estimators=100,
-            max_depth=6,
-            learning_rate=0.1,
+            n_estimators=tuned.get("n_estimators", 100),
+            max_depth=tuned.get("max_depth", 6),
+            learning_rate=tuned.get("learning_rate", 0.1),
+            subsample=tuned.get("subsample", 1.0),
+            colsample_bytree=tuned.get("colsample_bytree", 1.0),
             random_state=42,
             objective='reg:squarederror'
         )
@@ -116,7 +133,8 @@ class RegressionModelManager:
             'train_r2': train_r2,
             'test_r2': test_r2,
             'rmse': rmse,
-            'mae': mae
+            'mae': mae,
+            'hyperparameters': tuned,
         }
         
         print(f"✓ XGBoost - Train R²: {train_r2:.3f}, Test R²: {test_r2:.3f}, RMSE: {rmse:.2f}")
@@ -178,17 +196,33 @@ class RegressionModelManager:
         print(f"✓ MLP Regressor - Train R²: {train_r2:.3f}, Test R²: {test_r2:.3f}, RMSE: {rmse:.2f}")
         return model
     
-    def train_all_regressors(self, X_train, y_train, X_test, y_test):
-        """Train all regression models"""
+    def train_all_regressors(
+        self,
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+        tuned_params: dict | None = None,
+    ):
+        """Train all regression models.
+
+        tuned_params: optional Optuna best params dict. Keys come from
+        src/models/hyperparameter_tuning.py, and are mapped to the models here.
+        """
         print("\n📊 Training regression models...\n")
-        
+
+        tuned_params = tuned_params or {}
         self.train_linear_regression(X_train, y_train, X_test, y_test)
-        self.train_random_forest_regressor(X_train, y_train, X_test, y_test)
+        self.train_random_forest_regressor(
+            X_train, y_train, X_test, y_test, params=tuned_params.get("random_forest_reg")
+        )
         self.train_gradient_boosting(X_train, y_train, X_test, y_test)
-        self.train_xgboost_regressor(X_train, y_train, X_test, y_test)
+        self.train_xgboost_regressor(
+            X_train, y_train, X_test, y_test, params=tuned_params.get("xgboost_reg")
+        )
         self.train_svm_regressor(X_train, y_train, X_test, y_test)
         self.train_mlp_regressor(X_train, y_train, X_test, y_test)
-        
+
         return self.models
     
     def get_best_model(self):

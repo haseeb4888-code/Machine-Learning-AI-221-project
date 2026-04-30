@@ -10,6 +10,7 @@ from src.data.preprocessor import DataPreprocessor
 from src.data.feature_engineer import FeatureEngineer
 from src.models.classification_models import ClassificationModelManager
 from src.models.regression_models import RegressionModelManager
+from src.models.hyperparameter_tuning import HyperparameterTuner
 
 
 class TrainingPipeline:
@@ -27,6 +28,7 @@ class TrainingPipeline:
         self.y_train_clf = None
         self.y_test_clf = None
         self.le_gdp = None
+        self.tuned_params: dict | None = None
     
     def load_and_preprocess(self):
         """Load and preprocess data"""
@@ -110,9 +112,34 @@ class TrainingPipeline:
         print(f"✓ Features: {self.X_train.shape[1]}")
         
         return self.X_train, self.X_test, self.y_train_reg, self.y_test_reg, self.y_train_clf, self.y_test_clf
+
+    def tune_hyperparameters(self, n_trials: int = 50, timeout: int = 300, seed: int = 42) -> dict:
+        """Sequential Optuna tuning BEFORE final training."""
+        print("\n" + "=" * 60)
+        print("🔧 HYPERPARAMETER TUNING (Optuna - Sequential)")
+        print("=" * 60)
+
+        tuner = HyperparameterTuner(n_trials=n_trials, timeout=timeout, seed=seed)
+
+        # Classification tuning
+        tuner.tune_logistic_regression(self.X_train, self.y_train_clf)
+        tuner.tune_random_forest_classifier(self.X_train, self.y_train_clf)
+        tuner.tune_xgboost_classifier(self.X_train, self.y_train_clf)
+
+        # Regression tuning
+        tuner.tune_random_forest_regressor(self.X_train, self.y_train_reg)
+        tuner.tune_xgboost_regressor(self.X_train, self.y_train_reg)
+
+        tuner.print_summary()
+
+        self.tuned_params = tuner.get_all_best_params()
+        # Save alongside models/results for later inspection.
+        tuner.save_best_params("results/hyperparameters.json")
+
+        return self.tuned_params
     
     def train_classification_models(self):
-        """Train all classification models"""
+        """Train all classification models (optionally with tuned params)."""
         print("\n" + "=" * 60)
         print("🤖 TRAINING CLASSIFICATION MODELS")
         print("=" * 60)
@@ -120,14 +147,15 @@ class TrainingPipeline:
         clf_manager = ClassificationModelManager()
         clf_manager.train_all_classifiers(
             self.X_train, self.y_train_clf, 
-            self.X_test, self.y_test_clf
+            self.X_test, self.y_test_clf,
+            tuned_params=self.tuned_params,
         )
         clf_manager.save_models()
         
         return clf_manager
     
     def train_regression_models(self):
-        """Train all regression models"""
+        """Train all regression models (optionally with tuned params)."""
         print("\n" + "=" * 60)
         print("📊 TRAINING REGRESSION MODELS")
         print("=" * 60)
@@ -135,32 +163,59 @@ class TrainingPipeline:
         reg_manager = RegressionModelManager()
         reg_manager.train_all_regressors(
             self.X_train, self.y_train_reg,
-            self.X_test, self.y_test_reg
+            self.X_test, self.y_test_reg,
+            tuned_params=self.tuned_params,
         )
         reg_manager.save_models()
         
         return reg_manager
     
-    def train_classification_models_with_data(self, X_train, y_train_clf, X_test, y_test_clf):
-        """Train all classification models with provided data"""
+    def train_classification_models_with_data(
+        self,
+        X_train,
+        y_train_clf,
+        X_test,
+        y_test_clf,
+        tuned_params: dict | None = None,
+    ):
+        """Train all classification models with provided data."""
         print("\n" + "=" * 60)
         print("🤖 TRAINING CLASSIFICATION MODELS")
         print("=" * 60)
         
         clf_manager = ClassificationModelManager()
-        clf_manager.train_all_classifiers(X_train, y_train_clf, X_test, y_test_clf)
+        clf_manager.train_all_classifiers(
+            X_train,
+            y_train_clf,
+            X_test,
+            y_test_clf,
+            tuned_params=tuned_params,
+        )
         clf_manager.save_models()
         
         return clf_manager
     
-    def train_regression_models_with_data(self, X_train, y_train_reg, X_test, y_test_reg):
-        """Train all regression models with provided data"""
+    def train_regression_models_with_data(
+        self,
+        X_train,
+        y_train_reg,
+        X_test,
+        y_test_reg,
+        tuned_params: dict | None = None,
+    ):
+        """Train all regression models with provided data."""
         print("\n" + "=" * 60)
         print("📊 TRAINING REGRESSION MODELS")
         print("=" * 60)
         
         reg_manager = RegressionModelManager()
-        reg_manager.train_all_regressors(X_train, y_train_reg, X_test, y_test_reg)
+        reg_manager.train_all_regressors(
+            X_train,
+            y_train_reg,
+            X_test,
+            y_test_reg,
+            tuned_params=tuned_params,
+        )
         reg_manager.save_models()
         
         return reg_manager
@@ -183,8 +238,11 @@ class TrainingPipeline:
         
         # Step 4: Split data
         self.prepare_train_test_split()
+
+        # Step 5: NEW - Hyperparameter tuning BEFORE final training
+        self.tune_hyperparameters(n_trials=50, timeout=300, seed=42)
         
-        # Step 5: Train models
+        # Step 6: Train models (using tuned hyperparameters)
         clf_manager = self.train_classification_models()
         reg_manager = self.train_regression_models()
         clust_manager = self.train_clustering_models()
@@ -194,7 +252,7 @@ class TrainingPipeline:
         print("=" * 60)
         print("\n🎉 All models trained and saved successfully!")
         
-        return clf_manager, reg_manager,clust_manager
+        return clf_manager, reg_manager, clust_manager
     def train_clustering_models(self):
         """Train all clustering models"""
         print("\n" + "=" * 60)
@@ -233,4 +291,4 @@ class TrainingPipeline:
 
 if __name__ == "__main__":
     pipeline = TrainingPipeline()
-    clf_manager, reg_manager = pipeline.run_full_pipeline()
+    clf_manager, reg_manager, clust_manager = pipeline.run_full_pipeline()
