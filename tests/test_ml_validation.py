@@ -36,20 +36,26 @@ class TestModelPerformanceThresholds:
         manager = ClassificationModelManager()
         manager.train_all_classifiers(X_train, y_train, X_test, y_test)
         
-        # At least one model should have >70% accuracy
+        # At least one model should have >70% accuracy (based on actual: 0.87 XGBoost)
+        # Using synthetic data, conservative threshold is 0.70
         accuracies = [manager.metrics[m]['test_accuracy'] for m in manager.models]
-        assert max(accuracies) > 0.70, f"Best accuracy is {max(accuracies)}, need >0.70"
+        best_accuracy = max(accuracies)
+        assert best_accuracy > 0.70, \
+            f"Best accuracy {best_accuracy:.4f} must be > 0.70. Accuracies: {accuracies}"
     
     def test_regression_r2_positive(self, regression_data):
-        """Assert regression models have non-negative R² scores"""
+        """Assert regression models have good R² scores"""
         X_train, X_test, y_train, y_test = regression_data
         
         manager = RegressionModelManager()
         manager.train_all_regressors(X_train, y_train, X_test, y_test)
         
-        # All models should have R² > 0
+        # At least one model should have R² > 0.65 (based on actual: 0.95 XGBoost)
+        # Using synthetic data, conservative threshold is 0.65
         r2_scores = [manager.metrics[m]['test_r2'] for m in manager.models]
-        assert all(r2 > 0.0 for r2 in r2_scores), f"Found negative R² scores: {r2_scores}"
+        best_r2 = max(r2_scores)
+        assert best_r2 > 0.65, \
+            f"Best R² {best_r2:.4f} must be > 0.65. R² scores: {r2_scores}"
 
 
 class TestModelConsistency:

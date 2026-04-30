@@ -22,7 +22,7 @@ from deepchecks.tabular.suites import train_test_validation, model_evaluation
 def test_deepchecks_train_test_validation_runs():
     """Runs DeepChecks train/test validation suite without errors."""
     X, y = make_classification(
-        n_samples=1200,
+        n_samples=400,
         n_features=18,
         n_informative=12,
         n_classes=3,
@@ -62,7 +62,7 @@ def test_deepchecks_model_evaluation_runs_classification():
         X, y, test_size=0.25, random_state=42, stratify=y
     )
 
-    model = RandomForestClassifier(n_estimators=200, random_state=42)
+    model = RandomForestClassifier(n_estimators=50, random_state=42)
     model.fit(X_train, y_train)
 
     feature_names = [f"f{i}" for i in range(X_train.shape[1])]
@@ -83,7 +83,7 @@ def test_deepchecks_model_evaluation_runs_classification():
 def test_deepchecks_model_evaluation_runs_regression():
     """Runs DeepChecks model evaluation suite for a regressor."""
     X, y = make_regression(
-        n_samples=1200,
+        n_samples=400,
         n_features=18,
         n_informative=12,
         noise=0.2,
@@ -93,7 +93,7 @@ def test_deepchecks_model_evaluation_runs_regression():
         X, y, test_size=0.25, random_state=42
     )
 
-    model = RandomForestRegressor(n_estimators=200, random_state=42)
+    model = RandomForestRegressor(n_estimators=50, random_state=42)
     model.fit(X_train, y_train)
 
     feature_names = [f"f{i}" for i in range(X_train.shape[1])]

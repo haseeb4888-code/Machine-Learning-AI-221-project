@@ -159,3 +159,40 @@ class TestClusteringModels:
         assert len(cluster_info) == 3
         total_percentage = sum(info['percentage'] for info in cluster_info.values())
         assert abs(total_percentage - 100) < 0.01
+    
+    def test_clustering_quality_kmeans(self, sample_regression_data):
+        """Test that KMeans clustering produces reasonable silhouette scores"""
+        X_train, _, _, _ = sample_regression_data
+        
+        manager = ClusteringModelManager()
+        model, labels = manager.train_kmeans(X_train, n_clusters=3)
+        
+        # Check silhouette score exists and is reasonable
+        assert 'kmeans' in manager.metrics
+        assert 'silhouette_score' in manager.metrics['kmeans']
+        silhouette_score = manager.metrics['kmeans']['silhouette_score']
+        
+        # Silhouette score should be > -1 and < 1
+        # On synthetic data with 3 clusters, expect > 0 (positive) for reasonable clustering
+        assert -1 <= silhouette_score <= 1, \
+            f"Silhouette score {silhouette_score} out of valid range [-1, 1]"
+        assert silhouette_score > -0.5, \
+            f"Silhouette score {silhouette_score:.4f} indicates poor clustering"
+    
+    def test_clustering_quality_hierarchical(self, sample_regression_data):
+        """Test that Hierarchical clustering produces reasonable silhouette scores"""
+        X_train, _, _, _ = sample_regression_data
+        
+        manager = ClusteringModelManager()
+        model, labels = manager.train_hierarchical(X_train, n_clusters=3)
+        
+        # Check silhouette score exists and is reasonable
+        assert 'hierarchical' in manager.metrics
+        assert 'silhouette_score' in manager.metrics['hierarchical']
+        silhouette_score = manager.metrics['hierarchical']['silhouette_score']
+        
+        # Silhouette score should be > -1 and < 1
+        assert -1 <= silhouette_score <= 1, \
+            f"Silhouette score {silhouette_score} out of valid range [-1, 1]"
+        assert silhouette_score > -0.5, \
+            f"Silhouette score {silhouette_score:.4f} indicates poor clustering"

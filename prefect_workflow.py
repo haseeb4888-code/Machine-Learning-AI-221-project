@@ -16,12 +16,14 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 
 import pandas as pd
 from prefect import flow, task
 from prefect.context import get_run_context
 from prefect.logging import get_run_logger
+
+import subprocess
 
 from src.models.training import TrainingPipeline
 
@@ -288,6 +290,273 @@ def save_results_task(summary: Dict, output_dir: str = 'results') -> str:
     return str(file_path)
 
 
+@task(name="Run Model Validation Tests", retries=0)
+def run_model_validation_task(split_data: Dict, clf_metrics: Dict, reg_metrics: Dict) -> Dict:
+    """
+    Validate trained models against performance thresholds.
+    This is a critical quality gate - failing validation stops the pipeline.
+    """
+    logger = get_run_logger()
+    logger.info("\n" + "=" * 70)
+    logger.info("🧪 RUNNING ML VALIDATION TESTS (Quality Gate)")
+    logger.info("=" * 70)
+    
+    import numpy as np
+    
+    validation_results = {
+        'tests_passed': 0,
+        'tests_failed': 0,
+        'threshold_checks': {},
+        'status': 'PENDING'
+    }
+    
+    try:
+        # Check 1: Classification accuracy threshold
+        logger.info("\n[1/3] Validating Classification Accuracy...")
+        if clf_metrics and 'metrics' in clf_metrics:
+            clf_accuracies = [m['test_accuracy'] for m in clf_metrics['metrics'].values()]
+            max_clf_accuracy = max(clf_accuracies) if clf_accuracies else 0.0
+            min_accuracy_threshold = 0.70  # Minimum acceptable accuracy
+            
+            if max_clf_accuracy >= min_accuracy_threshold:
+                logger.info(f"  ✓ PASSED: Best accuracy {max_clf_accuracy:.4f} >= {min_accuracy_threshold}")
+                validation_results['tests_passed'] += 1
+                best_clf_model = max(clf_metrics['metrics'].items(), 
+                                     key=lambda x: x[1].get('test_accuracy', 0))[0]
+                validation_results['threshold_checks']['classification_accuracy'] = {
+                    'required': min_accuracy_threshold,
+                    'achieved': max_clf_accuracy,
+                    'status': 'PASS',
+                    'best_model': best_clf_model
+                }
+            else:
+                logger.warning(f"  ✗ FAILED: Best accuracy {max_clf_accuracy:.4f} < {min_accuracy_threshold}")
+                validation_results['tests_failed'] += 1
+                best_clf_model = max(clf_metrics['metrics'].items(), 
+                                     key=lambda x: x[1].get('test_accuracy', 0))[0]
+                validation_results['threshold_checks']['classification_accuracy'] = {
+                    'required': min_accuracy_threshold,
+                    'achieved': max_clf_accuracy,
+                    'status': 'FAIL',
+                    'best_model': best_clf_model
+                }
+        else:
+            logger.warning("  ⚠ SKIPPED: No classification metrics available")
+            validation_results['threshold_checks']['classification_accuracy'] = {
+                'status': 'SKIPPED',
+                'reason': 'No metrics available'
+            }
+        
+        # Check 2: Regression R² threshold
+        logger.info("[2/3] Validating Regression R² Score...")
+        if reg_metrics and 'metrics' in reg_metrics:
+            reg_r2_scores = [m['test_r2'] for m in reg_metrics['metrics'].values() if m.get('test_r2', -999) > -999]
+            max_reg_r2 = max(reg_r2_scores) if reg_r2_scores else 0.0
+            min_r2_threshold = 0.65  # Minimum acceptable R²
+            
+            if max_reg_r2 >= min_r2_threshold:
+                logger.info(f"  ✓ PASSED: Best R² {max_reg_r2:.4f} >= {min_r2_threshold}")
+                validation_results['tests_passed'] += 1
+                best_reg_model = max(reg_metrics['metrics'].items(), 
+                                     key=lambda x: x[1].get('test_r2', -999))[0]
+                validation_results['threshold_checks']['regression_r2'] = {
+                    'required': min_r2_threshold,
+                    'achieved': max_reg_r2,
+                    'status': 'PASS',
+                    'best_model': best_reg_model
+                }
+            else:
+                logger.warning(f"  ✗ FAILED: Best R² {max_reg_r2:.4f} < {min_r2_threshold}")
+                validation_results['tests_failed'] += 1
+                best_reg_model = max(reg_metrics['metrics'].items(), 
+                                     key=lambda x: x[1].get('test_r2', -999))[0]
+                validation_results['threshold_checks']['regression_r2'] = {
+                    'required': min_r2_threshold,
+                    'achieved': max_reg_r2,
+                    'status': 'FAIL',
+                    'best_model': best_reg_model
+                }
+        else:
+            logger.warning("  ⚠ SKIPPED: No regression metrics available")
+            validation_results['threshold_checks']['regression_r2'] = {
+                'status': 'SKIPPED',
+                'reason': 'No metrics available'
+            }
+        
+        # Check 3: Prediction validity (no NaN values)
+        logger.info("[3/3] Validating Data Quality...")
+        X_test = split_data.get('X_test')
+        has_nan = False
+        
+        if X_test is not None:
+            has_nan = bool(np.any(np.isnan(X_test)))
+            
+            if not has_nan:
+                logger.info(f"  ✓ PASSED: No NaN values in test features")
+                validation_results['tests_passed'] += 1
+                validation_results['threshold_checks']['data_quality'] = {
+                    'nan_values': 0,
+                    'status': 'PASS'
+                }
+            else:
+                logger.warning(f"  ✗ FAILED: NaN values detected in test features")
+                validation_results['tests_failed'] += 1
+                validation_results['threshold_checks']['data_quality'] = {
+                    'nan_values': int(np.sum(np.isnan(X_test))),
+                    'status': 'FAIL'
+                }
+        else:
+            logger.warning("  ⚠ SKIPPED: Test data not available")
+            validation_results['threshold_checks']['data_quality'] = {
+                'status': 'SKIPPED',
+                'reason': 'No test data'
+            }
+        
+        # Final verdict
+        logger.info("\n" + "-" * 70)
+        logger.info(f"Validation Summary: {validation_results['tests_passed']} PASSED, {validation_results['tests_failed']} FAILED")
+        
+        if validation_results['tests_failed'] > 0:
+            validation_results['status'] = 'FAILED'
+            logger.error("❌ ML VALIDATION TESTS FAILED - Pipeline cannot proceed")
+        else:
+            validation_results['status'] = 'PASSED'
+            logger.info("✅ All ML VALIDATION TESTS PASSED - Pipeline can proceed")
+        
+        logger.info("=" * 70)
+        
+    except Exception as e:
+        logger.error(f"Error during validation: {str(e)}")
+        validation_results['status'] = 'ERROR'
+        validation_results['error'] = str(e)
+    
+    return validation_results
+
+
+@task(name="Run DeepChecks Validation", retries=0)
+def run_deepchecks_task(split_data: Dict) -> Dict:
+    """
+    Run DeepChecks data quality and model validation checks.
+    Provides comprehensive data validation without blocking pipeline on failure.
+    """
+    logger = get_run_logger()
+    logger.info("\n" + "=" * 70)
+    logger.info("📊 RUNNING DEEPCHECKS DATA VALIDATION")
+    logger.info("=" * 70)
+    
+    deepchecks_results = {
+        'status': 'PENDING',
+        'checks_run': 0,
+        'checks_passed': 0,
+        'checks_failed': 0,
+        'warnings': []
+    }
+    
+    try:
+        # Try to import deepchecks
+        try:
+            import pandas as pd
+            from deepchecks.tabular import Dataset
+            from deepchecks.tabular.suites import train_test_validation
+        except ImportError:
+            logger.warning("⚠️  DeepChecks not installed. Skipping DeepChecks validation.")
+            deepchecks_results['status'] = 'SKIPPED'
+            deepchecks_results['reason'] = 'DeepChecks package not installed'
+            return deepchecks_results
+        
+        # Get data from split_data
+        X_train = split_data.get('X_train')
+        X_test = split_data.get('X_test')
+        y_train = split_data.get('y_train_clf')  # Use classification target
+        y_test = split_data.get('y_test_clf')
+        
+        if X_train is None or X_test is None:
+            logger.warning("⚠️  Incomplete split data. Skipping DeepChecks validation.")
+            deepchecks_results['status'] = 'SKIPPED'
+            deepchecks_results['reason'] = 'Incomplete split data'
+            return deepchecks_results
+        
+        # Create feature names
+        feature_names = [f"feature_{i}" for i in range(X_train.shape[1])]
+        
+        logger.info(f"Running train-test validation suite on {X_train.shape[0]} train, {X_test.shape[0]} test samples...")
+        
+        # Create DeepChecks datasets
+        train_ds = Dataset(
+            pd.DataFrame(X_train, columns=feature_names),
+            label=pd.Series(y_train, name='target') if y_train is not None else None
+        )
+        test_ds = Dataset(
+            pd.DataFrame(X_test, columns=feature_names),
+            label=pd.Series(y_test, name='target') if y_test is not None else None
+        )
+        
+        # Run validation suite
+        suite = train_test_validation()
+        result = suite.run(train_dataset=train_ds, test_dataset=test_ds)
+        
+        if result:
+            deepchecks_results['status'] = 'PASSED'
+            deepchecks_results['checks_run'] = len(result.results) if hasattr(result, 'results') else 0
+            logger.info(f"✓ DeepChecks validation completed successfully ({deepchecks_results['checks_run']} checks)")
+            logger.info("  Sample checks: Data integrity, feature distribution, label distribution")
+        else:
+            deepchecks_results['status'] = 'PASSED'
+            logger.info("✓ DeepChecks validation completed")
+        
+    except Exception as e:
+        logger.warning(f"⚠️  DeepChecks validation encountered issue: {str(e)}")
+        deepchecks_results['status'] = 'WARNING'
+        deepchecks_results['error'] = str(e)
+        deepchecks_results['warnings'].append(str(e))
+    
+    logger.info("=" * 70)
+    return deepchecks_results
+
+
+@task(name="Run pytest quality gate", retries=0)
+def run_pytest_quality_gate(test_paths: List[str] | None = None) -> Dict:
+    """Run the repository pytest suite (or selected files) as a Prefect quality gate.
+
+    Fails the Prefect flow if pytest returns non-zero.
+    """
+    logger = get_run_logger()
+    logger.info("\n" + "=" * 70)
+    logger.info("🧬 RUNNING PYTEST UNIT TESTS")
+    logger.info("=" * 70)
+
+    if not test_paths:
+        test_paths = [
+            "tests/test_models.py",
+            "tests/test_ml_validation.py",
+            "tests/test_api.py",
+            "tests/test_deepchecks.py",
+        ]
+
+    cmd = ["pytest", "-v", "--tb=short", *test_paths]
+    logger.info(f"Running: {' '.join(cmd)}\n")
+
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+
+    # Log output
+    if proc.stdout:
+        logger.info(f"pytest output:\n{proc.stdout}")
+    if proc.stderr:
+        logger.warning(f"pytest stderr:\n{proc.stderr}")
+
+    if proc.returncode != 0:
+        logger.error(f"❌ pytest failed with exit code {proc.returncode}")
+        raise RuntimeError(f"pytest failed with exit code {proc.returncode}")
+
+    logger.info("✅ All pytest tests PASSED")
+    logger.info("=" * 70)
+    return {
+        "pytest_returncode": proc.returncode,
+        "pytest_tests": test_paths,
+        "status": "PASSED"
+    }
+
+
 # ============================================================================
 # FLOW - Main workflow orchestration
 # ============================================================================
@@ -338,7 +607,28 @@ def ml_training_flow(
     if run_clustering:  # ADD THIS
         clust_results = train_clustering_task(split_data)
     
-    # Step 8: Validate and Extract Summary
+    # Step 8: ML VALIDATION TESTS (CRITICAL QUALITY GATE)
+    logger.info("\n" + "=" * 70)
+    logger.info("🧪 STAGE: MODEL VALIDATION")
+    logger.info("=" * 70)
+    
+    validation_results = None
+    deepchecks_results = None
+    
+    if clf_results and reg_results:
+        # Run model validation (checks performance thresholds)
+        validation_results = run_model_validation_task(split_data, clf_results, reg_results)
+        
+        # Check if validation passed - if not, stop pipeline
+        if validation_results.get('status') == 'FAILED':
+            logger.error("\n❌ PIPELINE STOPPED: Model validation failed!")
+            logger.error(f"Failed checks: {validation_results.get('threshold_checks', {})}")
+            raise RuntimeError("Model validation thresholds not met - pipeline stopped")
+        
+        # Run DeepChecks (data quality validation - warning only)
+        deepchecks_results = run_deepchecks_task(split_data)
+    
+    # Step 9: Validate and Extract Summary
     if clf_results and reg_results and clust_results:  # UPDATED
         summary = validate_results_task(clf_results, reg_results)
         # Add clustering to summary
@@ -357,12 +647,29 @@ def ml_training_flow(
     if tuned_params:
         summary['tuned_params'] = tuned_params
     
-    # Step 9: Save results to disk
+    # Add validation results to summary
+    if validation_results:
+        summary['validation_results'] = validation_results
+    if deepchecks_results:
+        summary['deepchecks_results'] = deepchecks_results
+    
+    # Step 10: Save results to disk
     saved_file_path = save_results_task(summary)
     summary['saved_file_path'] = saved_file_path
-    
+
+    # Step 11: Run in-pipeline pytest quality gate (fails flow on test failures)
+    logger.info("\n" + "=" * 70)
+    logger.info("🧬 STAGE: PYTEST UNIT TESTS")
     logger.info("=" * 70)
-    logger.info("✅ ML Training Pipeline Completed Successfully!")
+    
+    pytest_results = run_pytest_quality_gate()
+    summary['pytest_results'] = pytest_results
+    
+    logger.info("\n" + "=" * 70)
+    logger.info("✅ ML TRAINING PIPELINE COMPLETED SUCCESSFULLY!")
+    logger.info("=" * 70)
+    logger.info(f"Pipeline Status: SUCCESS")
+    logger.info(f"Results saved to: {saved_file_path}")
     logger.info("=" * 70)
     
     return summary

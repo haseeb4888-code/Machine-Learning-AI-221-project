@@ -10,9 +10,13 @@ from pathlib import Path
 import traceback
 from typing import Dict, Any
 
-from schemas import (
-    CountryFeatures, PredictionResponse, HealthResponse, MetricsResponse,
-    ClusteringResponse, ClusterAnalysisResponse
+from src.api.schemas import (
+    CountryFeatures,
+    PredictionResponse,
+    HealthResponse,
+    MetricsResponse,
+    ClusteringResponse,
+    ClusterAnalysisResponse
 )
 
 app = FastAPI(

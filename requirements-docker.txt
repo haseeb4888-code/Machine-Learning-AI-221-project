@@ -1,4 +1,6 @@
 # Runtime dependencies for Docker image (kept lean for faster builds)
+# Note: we also include pytest + deepchecks because the Prefect workflow
+# will run tests as an in-pipeline quality gate.
 fastapi==0.104.1
 uvicorn==0.24.0
 pydantic==2.5.0
@@ -6,6 +8,12 @@ pydantic==2.5.0
 numpy==1.24.0
 scikit-learn==1.3.0
 joblib==1.3.0
+pandas==2.0.0
 
 python-dotenv==1.0.0
 requests==2.31.0
+
+# Test / validation dependencies (used by Prefect training quality gates)
+pytest==7.4.3
+deepchecks==0.18.1
+httpx==0.27.2
