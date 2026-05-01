@@ -1,20 +1,13 @@
-name: Train Models
+name: Unit Tests
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - scripts/bake_models.py
-      - src/models/**
-      - src/data/**
-      - requirements*.txt
-  workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
 
 jobs:
-  train:
+  unit_tests:
     runs-on: ubuntu-latest
 
     steps:
@@ -35,7 +28,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install -r requirements-ci.txt
+          python -m pip check
 
-      - name: Train / bake models
+      - name: Run unit tests
         run: |
-          python scripts/bake_models.py
+          pytest -q tests/test_api.py tests/test_data_loader.py tests/test_models.py
