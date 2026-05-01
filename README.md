@@ -14,7 +14,15 @@ app_port: 8000
 
 ## CI
 
-GitHub Actions runs tests (including DeepChecks) on pushes/PRs to `main`.
+GitHub Actions runs code checks + tests (including DeepChecks) on pushes/PRs.
+
+### Hugging Face deployment (Spaces)
+
+The pipeline can auto-deploy to a Hugging Face Space on pushes to `main`.
+
+Configure these in your GitHub repo settings:
+- **Secret**: `HF_TOKEN` (a Hugging Face access token with write access to the Space)
+- **Variable**: `HF_SPACE_REPO` (format: `<namespace>/<space_name>`, e.g. `my-username/my-space`)
 
 ## Models
 

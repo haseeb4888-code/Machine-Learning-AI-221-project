@@ -35,3 +35,12 @@ jobs:
       push_image: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       image_repo: ghcr.io/${{ github.repository }}
       image_sha: ${{ github.sha }}
+
+  deploy_huggingface:
+    name: Deploy to Hugging Face Space
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: docker
+    uses: ./.github/workflows/deploy_huggingface.yml
+    secrets: inherit
+    with:
+      space_repo: ${{ vars.HF_SPACE_REPO }}

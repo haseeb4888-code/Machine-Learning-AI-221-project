@@ -1,0 +1,48 @@
+name: Deploy to Hugging Face Space
+
+on:
+  workflow_call:
+    inputs:
+      space_repo:
+        description: "Hugging Face Space repo in the form <namespace>/<space_name>"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate required config
+        run: |
+          if [ -z "${{ inputs.space_repo }}" ]; then
+            echo "Missing input: space_repo"
+            exit 1
+          fi
+          if [ -z "${{ secrets.HF_TOKEN }}" ]; then
+            echo "Missing secret: HF_TOKEN"
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Push to Hugging Face (Spaces)
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          SPACE_REPO: ${{ inputs.space_repo }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Use token-based auth; 'oauth2' works as a username placeholder for git HTTPS.
+          HF_REMOTE="https://oauth2:${HF_TOKEN}@huggingface.co/spaces/${SPACE_REPO}.git"
+
+          git remote remove hf 2>/dev/null || true
+          git remote add hf "${HF_REMOTE}"
+
+          # Deploy current commit to the Space's main branch.
+          git push hf HEAD:main
