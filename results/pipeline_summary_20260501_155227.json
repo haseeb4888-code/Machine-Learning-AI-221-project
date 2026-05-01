@@ -1,0 +1,238 @@
+{
+    "timestamp": "2026-05-01T15:52:27.342120",
+    "classifiers_trained": 7,
+    "regressors_trained": 6,
+    "clf_models": [
+        "logistic_regression",
+        "random_forest",
+        "knn",
+        "xgboost",
+        "svm",
+        "gaussian_naive_bayes",
+        "mlp"
+    ],
+    "reg_models": [
+        "linear_regression",
+        "random_forest",
+        "gradient_boosting",
+        "xgboost",
+        "svm",
+        "mlp"
+    ],
+    "clf_metrics": {
+        "logistic_regression": {
+            "train_accuracy": 0.856353591160221,
+            "test_accuracy": 0.8478260869565217,
+            "hyperparameters": {
+                "C": 0.001267425589893723,
+                "max_iter": 1943
+            }
+        },
+        "random_forest": {
+            "train_accuracy": 0.9723756906077348,
+            "test_accuracy": 0.8478260869565217,
+            "hyperparameters": {
+                "n_estimators": 337,
+                "max_depth": 5,
+                "min_samples_split": 7,
+                "min_samples_leaf": 1
+            }
+        },
+        "knn": {
+            "train_accuracy": 0.6298342541436464,
+            "test_accuracy": 0.391304347826087
+        },
+        "xgboost": {
+            "train_accuracy": 1.0,
+            "test_accuracy": 0.8695652173913043,
+            "hyperparameters": {
+                "n_estimators": 162,
+                "max_depth": 3,
+                "learning_rate": 0.19030368381735815,
+                "subsample": 0.8404460046972835,
+                "colsample_bytree": 0.8832290311184181
+            }
+        },
+        "svm": {
+            "train_accuracy": 0.9337016574585635,
+            "test_accuracy": 0.8478260869565217,
+            "hyperparameters": {
+                "C": 1.3292918943162166,
+                "kernel": "linear",
+                "gamma": 0.00029380279387035364
+            }
+        },
+        "gaussian_naive_bayes": {
+            "train_accuracy": 0.5966850828729282,
+            "test_accuracy": 0.5652173913043478
+        },
+        "mlp": {
+            "train_accuracy": 0.3701657458563536,
+            "test_accuracy": 0.2608695652173913
+        }
+    },
+    "reg_metrics": {
+        "linear_regression": {
+            "train_r2": 0.9395528874747717,
+            "test_r2": 0.7239792044658606,
+            "rmse": 5305.505443183528,
+            "mae": 3181.565438574409
+        },
+        "random_forest": {
+            "train_r2": 0.96486802781143,
+            "test_r2": 0.9401460939986256,
+            "rmse": 2470.598147497048,
+            "mae": 1532.624154963365,
+            "hyperparameters": {
+                "n_estimators": 282,
+                "max_depth": 17,
+                "min_samples_split": 3,
+                "min_samples_leaf": 3
+            }
+        },
+        "gradient_boosting": {
+            "train_r2": 0.999998434876002,
+            "test_r2": 0.9492608287109516,
+            "rmse": 2274.7179132597107,
+            "mae": 1257.3906769176187
+        },
+        "xgboost": {
+            "train_r2": 0.9991651020614587,
+            "test_r2": 0.9518791643601798,
+            "rmse": 2215.2484585862635,
+            "mae": 1440.5917108645115,
+            "hyperparameters": {
+                "n_estimators": 345,
+                "max_depth": 4,
+                "learning_rate": 0.027010527749605478,
+                "subsample": 0.7465447373174767,
+                "colsample_bytree": 0.7824279936868144
+            }
+        },
+        "svm": {
+            "train_r2": 0.874431833425765,
+            "test_r2": 0.8603690873957353,
+            "rmse": 3773.5199559615617,
+            "mae": 2658.2775967193757,
+            "hyperparameters": {
+                "C": 70.25166339242152,
+                "epsilon": 0.4370990468130503,
+                "kernel": "linear",
+                "gamma": 0.01129013355909268
+            }
+        },
+        "mlp": {
+            "train_r2": -2034.3767555621257,
+            "test_r2": -342.6908235084455,
+            "rmse": 187214.65035946155,
+            "mae": 85530.16536673174
+        }
+    },
+    "status": "success",
+    "clustering_trained": 3,
+    "clustering_models": [
+        "kmeans",
+        "hierarchical",
+        "dbscan"
+    ],
+    "clustering_metrics": {
+        "kmeans": {
+            "n_clusters": 3,
+            "silhouette_score": 0.8160340984849381,
+            "davies_bouldin_score": 0.4067357052461928,
+            "inertia": 8.286863643937122e+16
+        },
+        "hierarchical": {
+            "n_clusters": 3,
+            "silhouette_score": 0.86729792777455,
+            "davies_bouldin_score": 0.278536949515294
+        },
+        "dbscan": {
+            "n_clusters": 0,
+            "n_noise_points": 181,
+            "silhouette_score": -1,
+            "davies_bouldin_score": -1,
+            "eps": 0.5,
+            "min_samples": 5
+        }
+    },
+    "tuned_params": {
+        "logistic_regression": {
+            "C": 0.001267425589893723,
+            "max_iter": 1943
+        },
+        "random_forest_clf": {
+            "n_estimators": 337,
+            "max_depth": 5,
+            "min_samples_split": 7,
+            "min_samples_leaf": 1
+        },
+        "xgboost_clf": {
+            "n_estimators": 162,
+            "max_depth": 3,
+            "learning_rate": 0.19030368381735815,
+            "subsample": 0.8404460046972835,
+            "colsample_bytree": 0.8832290311184181
+        },
+        "svm_clf": {
+            "C": 1.3292918943162166,
+            "kernel": "linear",
+            "gamma": 0.00029380279387035364
+        },
+        "random_forest_reg": {
+            "n_estimators": 282,
+            "max_depth": 17,
+            "min_samples_split": 3,
+            "min_samples_leaf": 3
+        },
+        "xgboost_reg": {
+            "n_estimators": 345,
+            "max_depth": 4,
+            "learning_rate": 0.027010527749605478,
+            "subsample": 0.7465447373174767,
+            "colsample_bytree": 0.7824279936868144
+        },
+        "svm_reg": {
+            "C": 70.25166339242152,
+            "epsilon": 0.4370990468130503,
+            "kernel": "linear",
+            "gamma": 0.01129013355909268
+        }
+    },
+    "data_validation_results": {
+        "pytest_returncode": 0,
+        "test_file": "tests/test_data_loader.py",
+        "status": "PASSED",
+        "message": "Data validation successful - data is ready for training"
+    },
+    "validation_results": {
+        "tests_passed": 3,
+        "tests_failed": 0,
+        "threshold_checks": {
+            "classification_accuracy": {
+                "required": 0.7,
+                "achieved": 0.8695652173913043,
+                "status": "PASS",
+                "best_model": "xgboost"
+            },
+            "regression_r2": {
+                "required": 0.65,
+                "achieved": 0.9518791643601798,
+                "status": "PASS",
+                "best_model": "xgboost"
+            },
+            "data_quality": {
+                "nan_values": 0,
+                "status": "PASS"
+            }
+        },
+        "status": "PASSED"
+    },
+    "deepchecks_results": {
+        "status": "PENDING",
+        "checks_run": 0,
+        "checks_passed": 0,
+        "checks_failed": 0,
+        "warnings": []
+    }
+}

@@ -21,6 +21,8 @@ from optuna.samplers import TPESampler
 from sklearn.model_selection import cross_val_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.svm import SVC, SVR
+from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
 
 
@@ -156,6 +158,44 @@ class HyperparameterTuner:
         print(f"✓ Best CV score: {study.best_value:.4f}")
         return study.best_params
 
+    def tune_svm_classifier(self, X_train: np.ndarray, y_train: np.ndarray) -> Dict[str, Any]:
+        """Tune SVM (Support Vector Machine) classifier hyperparameters."""
+        print("\n🔍 Tuning SVM Classifier...")
+
+        def objective(trial: optuna.Trial) -> float:
+            C = trial.suggest_float("C", 0.1, 100.0, log=True)
+            kernel = trial.suggest_categorical("kernel", ["linear", "rbf", "poly"])
+            gamma = trial.suggest_float("gamma", 1e-4, 1e-1, log=True)
+            
+            if kernel == "poly":
+                degree = trial.suggest_int("degree", 2, 5)
+            else:
+                degree = 3  # Default, not used for other kernels
+
+            # Scale features for SVM (important for performance)
+            scaler = StandardScaler()
+            X_scaled = scaler.fit_transform(X_train)
+
+            model = SVC(
+                C=C,
+                kernel=kernel,
+                gamma=gamma,
+                degree=degree,
+                random_state=self.config.seed,
+                probability=True,  # Enable probability estimates
+            )
+
+            scores = cross_val_score(model, X_scaled, y_train, cv=self.config.cv, scoring="accuracy", n_jobs=1)
+            return float(np.mean(scores))
+
+        study = self._run_study(objective, direction="maximize", study_name="svm_clf")
+        self.best_params["svm_clf"] = study.best_params
+        self.study_history["svm_clf"] = study
+
+        print(f"✓ Best params: {study.best_params}")
+        print(f"✓ Best CV score: {study.best_value:.4f}")
+        return study.best_params
+
     # =========================================================================
     # REGRESSION TUNING
     # =========================================================================
@@ -218,6 +258,44 @@ class HyperparameterTuner:
         study = self._run_study(objective, direction="maximize", study_name="xgboost_reg")
         self.best_params["xgboost_reg"] = study.best_params
         self.study_history["xgboost_reg"] = study
+
+        print(f"✓ Best params: {study.best_params}")
+        print(f"✓ Best CV score: {study.best_value:.4f}")
+        return study.best_params
+
+    def tune_svm_regressor(self, X_train: np.ndarray, y_train: np.ndarray) -> Dict[str, Any]:
+        """Tune SVM (Support Vector Machine) regressor hyperparameters."""
+        print("\n🔍 Tuning SVM Regressor...")
+
+        def objective(trial: optuna.Trial) -> float:
+            C = trial.suggest_float("C", 0.1, 100.0, log=True)
+            epsilon = trial.suggest_float("epsilon", 0.01, 0.5, log=True)
+            kernel = trial.suggest_categorical("kernel", ["linear", "rbf", "poly"])
+            gamma = trial.suggest_float("gamma", 1e-4, 1e-1, log=True)
+            
+            if kernel == "poly":
+                degree = trial.suggest_int("degree", 2, 5)
+            else:
+                degree = 3  # Default, not used for other kernels
+
+            # Scale features for SVM (important for performance)
+            scaler = StandardScaler()
+            X_scaled = scaler.fit_transform(X_train)
+
+            model = SVR(
+                C=C,
+                epsilon=epsilon,
+                kernel=kernel,
+                gamma=gamma,
+                degree=degree,
+            )
+
+            scores = cross_val_score(model, X_scaled, y_train, cv=self.config.cv, scoring="r2", n_jobs=1)
+            return float(np.mean(scores))
+
+        study = self._run_study(objective, direction="maximize", study_name="svm_reg")
+        self.best_params["svm_reg"] = study.best_params
+        self.study_history["svm_reg"] = study
 
         print(f"✓ Best params: {study.best_params}")
         print(f"✓ Best CV score: {study.best_value:.4f}")

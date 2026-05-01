@@ -156,10 +156,12 @@ def tune_hyperparameters_task(
     tuner.tune_logistic_regression(split_data['X_train'], split_data['y_train_clf'])
     tuner.tune_random_forest_classifier(split_data['X_train'], split_data['y_train_clf'])
     tuner.tune_xgboost_classifier(split_data['X_train'], split_data['y_train_clf'])
+    tuner.tune_svm_classifier(split_data['X_train'], split_data['y_train_clf'])
 
     # Regression tuning
     tuner.tune_random_forest_regressor(split_data['X_train'], split_data['y_train_reg'])
     tuner.tune_xgboost_regressor(split_data['X_train'], split_data['y_train_reg'])
+    tuner.tune_svm_regressor(split_data['X_train'], split_data['y_train_reg'])
 
     out_path = Path("results") / "hyperparameters.json"
     tuner.save_best_params(out_path)

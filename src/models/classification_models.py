@@ -9,6 +9,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import xgboost as xgb
@@ -128,18 +129,37 @@ class ClassificationModelManager:
         print(f"✓ XGBoost - Train Acc: {train_acc:.3f}, Test Acc: {test_acc:.3f}")
         return model
     
-    def train_svm(self, X_train, y_train, X_test, y_test):
-        """Train Support Vector Machine classifier"""
-        model = SVC(kernel='rbf', C=1.0, gamma='scale', random_state=42)
-        model.fit(X_train, y_train)
+    def train_svm(self, X_train, y_train, X_test, y_test, params=None):
+        """Train Support Vector Machine classifier.
         
-        train_acc = model.score(X_train, y_train)
-        test_acc = model.score(X_test, y_test)
+        params (optional): tuned hyperparameters from Optuna.
+        Note: SVM requires feature scaling for optimal performance.
+        """
+        tuned = params or {}
+        
+        # Scale features for SVM (important for performance)
+        scaler = StandardScaler()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+        
+        model = SVC(
+            C=tuned.get("C", 1.0),
+            kernel=tuned.get("kernel", "rbf"),
+            gamma=tuned.get("gamma", "scale"),
+            degree=tuned.get("degree", 3),
+            probability=True,
+            random_state=42
+        )
+        model.fit(X_train_scaled, y_train)
+        
+        train_acc = model.score(X_train_scaled, y_train)
+        test_acc = model.score(X_test_scaled, y_test)
         
         self.models['svm'] = model
         self.metrics['svm'] = {
             'train_accuracy': train_acc,
             'test_accuracy': test_acc,
+            'hyperparameters': tuned,
         }
         
         print(f"✓ SVM - Train Acc: {train_acc:.3f}, Test Acc: {test_acc:.3f}")
@@ -206,7 +226,7 @@ class ClassificationModelManager:
         self.train_xgboost_classifier(
             X_train, y_train, X_test, y_test, params=tuned_params.get("xgboost_clf")
         )
-        self.train_svm(X_train, y_train, X_test, y_test)
+        self.train_svm(X_train, y_train, X_test, y_test, params=tuned_params.get("svm_clf"))
         self.train_gaussian_naive_bayes(X_train, y_train, X_test, y_test)
         self.train_mlp_classifier(X_train, y_train, X_test, y_test)
         

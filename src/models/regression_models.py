@@ -6,6 +6,7 @@ from pathlib import Path
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.svm import SVR
+from sklearn.preprocessing import StandardScaler
 from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 import xgboost as xgb
@@ -140,13 +141,30 @@ class RegressionModelManager:
         print(f"✓ XGBoost - Train R²: {train_r2:.3f}, Test R²: {test_r2:.3f}, RMSE: {rmse:.2f}")
         return model
     
-    def train_svm_regressor(self, X_train, y_train, X_test, y_test):
-        """Train Support Vector Machine Regressor"""
-        model = SVR(kernel='rbf', C=100.0, gamma='scale')
-        model.fit(X_train, y_train)
+    def train_svm_regressor(self, X_train, y_train, X_test, y_test, params=None):
+        """Train Support Vector Machine Regressor.
         
-        y_pred_train = model.predict(X_train)
-        y_pred_test = model.predict(X_test)
+        params (optional): tuned hyperparameters from Optuna.
+        Note: SVM requires feature scaling for optimal performance.
+        """
+        tuned = params or {}
+        
+        # Scale features for SVM (important for performance)
+        scaler = StandardScaler()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+        
+        model = SVR(
+            C=tuned.get("C", 100.0),
+            epsilon=tuned.get("epsilon", 0.1),
+            kernel=tuned.get("kernel", "rbf"),
+            gamma=tuned.get("gamma", "scale"),
+            degree=tuned.get("degree", 3)
+        )
+        model.fit(X_train_scaled, y_train)
+        
+        y_pred_train = model.predict(X_train_scaled)
+        y_pred_test = model.predict(X_test_scaled)
         
         train_r2 = r2_score(y_train, y_pred_train)
         test_r2 = r2_score(y_test, y_pred_test)
@@ -158,7 +176,8 @@ class RegressionModelManager:
             'train_r2': train_r2,
             'test_r2': test_r2,
             'rmse': rmse,
-            'mae': mae
+            'mae': mae,
+            'hyperparameters': tuned,
         }
         
         print(f"✓ SVM - Train R²: {train_r2:.3f}, Test R²: {test_r2:.3f}, RMSE: {rmse:.2f}")
@@ -220,7 +239,7 @@ class RegressionModelManager:
         self.train_xgboost_regressor(
             X_train, y_train, X_test, y_test, params=tuned_params.get("xgboost_reg")
         )
-        self.train_svm_regressor(X_train, y_train, X_test, y_test)
+        self.train_svm_regressor(X_train, y_train, X_test, y_test, params=tuned_params.get("svm_reg"))
         self.train_mlp_regressor(X_train, y_train, X_test, y_test)
 
         return self.models

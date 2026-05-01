@@ -1,7 +1,7 @@
 {
     "logistic_regression": {
-        "C": 4.5705630998014515,
-        "max_iter": 1238
+        "C": 0.001267425589893723,
+        "max_iter": 1943
     },
     "random_forest_clf": {
         "n_estimators": 337,
@@ -16,6 +16,11 @@
         "subsample": 0.8404460046972835,
         "colsample_bytree": 0.8832290311184181
     },
+    "svm_clf": {
+        "C": 1.3292918943162166,
+        "kernel": "linear",
+        "gamma": 0.00029380279387035364
+    },
     "random_forest_reg": {
         "n_estimators": 282,
         "max_depth": 17,
@@ -28,5 +33,11 @@
         "learning_rate": 0.027010527749605478,
         "subsample": 0.7465447373174767,
         "colsample_bytree": 0.7824279936868144
+    },
+    "svm_reg": {
+        "C": 70.25166339242152,
+        "epsilon": 0.4370990468130503,
+        "kernel": "linear",
+        "gamma": 0.01129013355909268
     }
 }
