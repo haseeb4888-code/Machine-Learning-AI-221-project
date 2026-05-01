@@ -442,6 +442,50 @@
           </button>
         </div>
 
+        <!-- Model selector pills -->
+        <div class="model-selector" id="classifyModelSelector" role="group"
+             aria-label="Choose classification model">
+          <span class="model-selector__label">Model:</span>
+          <div class="model-pills" id="classifyModelPills">
+            <button type="button" class="model-pill model-pill--active"
+                    data-model="best" id="mpill-best">⭐ Best</button>
+            <button type="button" class="model-pill"
+                    data-model="random_forest" id="mpill-rf">Random Forest</button>
+            <button type="button" class="model-pill"
+                    data-model="logistic_regression" id="mpill-lr">Logistic Regression</button>
+            <button type="button" class="model-pill"
+                    data-model="knn" id="mpill-knn">KNN</button>
+            <button type="button" class="model-pill"
+                    data-model="xgboost" id="mpill-xgb">XGBoost</button>
+            <button type="button" class="model-pill"
+                    data-model="svm" id="mpill-svm">SVM</button>
+            <button type="button" class="model-pill"
+                    data-model="gaussian_naive_bayes" id="mpill-gnb">Naive Bayes</button>
+            <button type="button" class="model-pill"
+                    data-model="mlp" id="mpill-mlp">MLP</button>
+          </div>
+          <button type="button" class="btn btn--secondary btn--sm" id="compareAllBtn">
+            Compare All ▶
+          </button>
+        </div>
+
+        <!-- Compare-all results table (hidden until Compare All is clicked) -->
+        <div class="compare-table-wrap" id="compareTableWrap" hidden>
+          <p class="compare-table-wrap__title">All Models — Comparison</p>
+          <table class="compare-table" id="compareTable">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Prediction</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="compareTableBody">
+              <!-- Rows injected by JS -->
+            </tbody>
+          </table>
+        </div>
+
         <form id="classifyForm" class="predictor-form" novalidate>
 
           <!-- Same two-column grid as the GDP predictor -->

@@ -590,6 +590,10 @@
   const explanEl     = document.getElementById('categoryExplanation');
   const modelEl      = document.getElementById('classifyModelUsed');
   const autofillBtn  = document.getElementById('classifyAutofillBtn');
+  const pillsContainer = document.getElementById('classifyModelPills');
+  const compareAllBtn  = document.getElementById('compareAllBtn');
+  const compareWrap    = document.getElementById('compareTableWrap');
+  const compareTbody   = document.getElementById('compareTableBody');
 
   if (!form) return;
 
@@ -605,6 +609,33 @@
     'agriculture', 'industry', 'service'
   ];
   const REGION_ID = 'c-region';  // string field handled separately
+
+  /* All 7 classifiers (key matches API model_name param) */
+  const ALL_MODELS = [
+    { key: 'random_forest',       label: 'Random Forest'       },
+    { key: 'logistic_regression', label: 'Logistic Regression' },
+    { key: 'knn',                 label: 'KNN'                 },
+    { key: 'xgboost',             label: 'XGBoost'             },
+    { key: 'svm',                 label: 'SVM'                 },
+    { key: 'gaussian_naive_bayes',label: 'Naive Bayes'         },
+    { key: 'mlp',                 label: 'MLP'                 },
+  ];
+
+  /* Currently selected model key — 'best' means use API default */
+  let selectedModel = 'best';
+
+  /* ── Pill selector ──────────────────────────────────────── */
+  if (pillsContainer) {
+    pillsContainer.addEventListener('click', (e) => {
+      const pill = e.target.closest('.model-pill');
+      if (!pill) return;
+      pillsContainer.querySelectorAll('.model-pill').forEach(p =>
+        p.classList.remove('model-pill--active')
+      );
+      pill.classList.add('model-pill--active');
+      selectedModel = pill.dataset.model;
+    });
+  }
 
   /* ── Category metadata ──────────────────────────────────── */
   /* Each category the API can return maps to a colour theme,
@@ -780,7 +811,12 @@
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE}/predict/gdp-category`, {
+      // Build URL — append model_name query param unless user chose 'best'
+      const url = selectedModel && selectedModel !== 'best'
+        ? `${API_BASE}/predict/gdp-category?model_name=${encodeURIComponent(selectedModel)}`
+        : `${API_BASE}/predict/gdp-category`;
+
+      const response = await fetch(url, {
         method : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body   : JSON.stringify(data),
@@ -810,6 +846,68 @@
     const el = document.getElementById('c-' + name);
     if (el) el.addEventListener('input', () => el.classList.remove('is-invalid'));
   });
+
+  /* ── Compare All button ─────────────────────────────────── */
+  /* Calls all 7 classifiers in parallel with Promise.allSettled
+     and renders a comparison table row for each result.       */
+  if (compareAllBtn) {
+    compareAllBtn.addEventListener('click', async () => {
+      const data = collectFormData();
+      if (!data) { showError('Fill in all fields first, then click Compare All.'); return; }
+      clearError();
+
+      // Show table with loading rows immediately
+      if (compareWrap) compareWrap.removeAttribute('hidden');
+      if (compareTbody) {
+        compareTbody.innerHTML = ALL_MODELS.map(m =>
+          `<tr id="ctr-${m.key}">
+            <td>${m.label}</td>
+            <td><span class="ct-badge ct-badge--loading">…</span></td>
+            <td style="color:var(--color-text-faint)">Pending</td>
+          </tr>`
+        ).join('');
+      }
+
+      // Fire all requests in parallel
+      const requests = ALL_MODELS.map(m =>
+        fetch(`${API_BASE}/predict/gdp-category?model_name=${encodeURIComponent(m.key)}`, {
+          method : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body   : JSON.stringify(data),
+        })
+        .then(r => r.json())
+        .then(json => ({ model: m, result: json, ok: true }))
+        .catch(err => ({ model: m, error: err, ok: false }))
+      );
+
+      const results = await Promise.allSettled(requests);
+
+      results.forEach(settled => {
+        const item   = settled.value || settled.reason;
+        const row    = document.getElementById(`ctr-${item.model.key}`);
+        if (!row) return;
+
+        if (!item.ok || !item.result) {
+          row.cells[1].innerHTML = '<span class="ct-badge ct-badge--error">Error</span>';
+          row.cells[2].textContent = 'API error';
+          return;
+        }
+
+        const cat = (item.result.predicted_category || '').toLowerCase();
+        const tier = cat.includes('low') ? 'low' : cat.includes('medium') ? 'medium' : cat.includes('high') ? 'high' : 'loading';
+        const emoji = tier === 'low' ? '🔴' : tier === 'medium' ? '🟡' : '🟢';
+
+        row.cells[1].innerHTML =
+          `<span class="ct-badge ct-badge--${tier}">${emoji} ${item.result.predicted_category || '?'}</span>`;
+        row.cells[2].textContent = item.result.model_used || item.model.label;
+      });
+
+      // Scroll to table
+      setTimeout(() => {
+        if (compareWrap) compareWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    });
+  }
 
 })();
 

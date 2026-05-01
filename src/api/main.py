@@ -1,6 +1,6 @@
 """FastAPI application for Economic Growth Analyzer"""
 
-from fastapi import FastAPI, HTTPException, File, UploadFile
+from fastapi import FastAPI, HTTPException, File, UploadFile, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 import pickle
@@ -323,35 +323,64 @@ def predict_gdp(features: CountryFeatures):
 
 
 @app.post("/predict/gdp-category", response_model=PredictionResponse, tags=["Predictions"])
-def predict_gdp_category(features: CountryFeatures):
-    """Predict GDP category (Low/Medium/High) using best classification model"""
+def predict_gdp_category(
+    features: CountryFeatures,
+    model_name: str = Query(
+        default=None,
+        description="Classifier to use. Options: logistic_regression, random_forest, knn, xgboost, svm, gaussian_naive_bayes, mlp. Defaults to best model from training."
+    )
+):
+    """Predict GDP category (Low/Medium/High) using a chosen or best classification model"""
     try:
-        best_clf_model = pipeline_metrics['best_classification_model']
-        
-        if best_clf_model == 'N/A' or best_clf_model not in classification_models:
-            raise HTTPException(status_code=503, detail="No classification model available. Run training pipeline first.")
-        
-        # Prepare feature array with engineered features (17 raw + 6 engineered = 24 total)
+        # Determine which model to use
+        if model_name and model_name in classification_models:
+            chosen_model_key = model_name
+        else:
+            chosen_model_key = pipeline_metrics['best_classification_model']
+
+        if chosen_model_key == 'N/A' or chosen_model_key not in classification_models:
+            raise HTTPException(
+                status_code=503,
+                detail=f"Model '{chosen_model_key}' not loaded. Available: {list(classification_models.keys())}"
+            )
+
+        # Prepare feature array with engineered features (18 raw + 6 engineered = 24 total)
         feature_values = engineer_features_for_prediction(features)
-        
-        model = classification_models[best_clf_model]
+
+        model = classification_models[chosen_model_key]
         prediction = model.predict(feature_values)[0]
-        
+
         categories = {0: 'Low', 1: 'Medium', 2: 'High'}
-        category_name = categories[prediction]
-        
+        category_name = categories.get(int(prediction), str(prediction))
+
         return PredictionResponse(
             predicted_category=category_name,
             confidence=pipeline_metrics['best_classification_accuracy'],
-            model_used=f"{best_clf_model.replace('_', ' ').title()} Classifier",
+            model_used=f"{chosen_model_key.replace('_', ' ').title()} Classifier",
             input_features=features.dict()
         )
-    
+
     except HTTPException:
         raise
     except Exception as e:
         print(f"Error in predict_gdp_category: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+
+
+@app.get("/models/classification", tags=["Models"])
+def list_classification_models():
+    """List all available classification models with their accuracy"""
+    models_info = {}
+    for model_key in classification_models:
+        models_info[model_key] = {
+            "display_name": model_key.replace('_', ' ').title(),
+            "available": True,
+        }
+    return {
+        "available_models": models_info,
+        "best_model": pipeline_metrics['best_classification_model'],
+        "best_accuracy": pipeline_metrics['best_classification_accuracy'],
+    }
 
 
 # NEW: CLUSTERING ENDPOINTS BELOW
