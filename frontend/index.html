@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EconAI — Economic Growth Analyzer</title>
-  <meta name="description" content="ML-powered economic analysis and GDP prediction platform for countries of the world." />
+  <meta name="description"
+    content="ML-powered economic analysis and GDP prediction platform for countries of the world." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
 
   <!-- ===================================================
@@ -22,22 +26,23 @@
       <a href="#dashboard" class="navbar__logo" aria-label="EconAI Home">
         <div class="navbar__logo-icon" aria-hidden="true">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="16" cy="16" r="13" stroke="url(#globeGrad)" stroke-width="1.8" fill="none"/>
-            <ellipse cx="16" cy="16" rx="6" ry="13" stroke="url(#globeGrad)" stroke-width="1.2" fill="none" opacity="0.6"/>
-            <line x1="3" y1="16" x2="29" y2="16" stroke="url(#globeGrad)" stroke-width="1.2" opacity="0.5"/>
-            <line x1="5.5" y1="10" x2="26.5" y2="10" stroke="url(#globeGrad)" stroke-width="1" opacity="0.4"/>
-            <line x1="5.5" y1="22" x2="26.5" y2="22" stroke="url(#globeGrad)" stroke-width="1" opacity="0.4"/>
-            <rect x="9"  y="19" width="3" height="5"  rx="1" fill="url(#barGrad)" opacity="0.9"/>
-            <rect x="14" y="15" width="3" height="9"  rx="1" fill="url(#barGrad)" opacity="0.9"/>
-            <rect x="19" y="11" width="3" height="13" rx="1" fill="url(#barGrad)" opacity="0.9"/>
+            <circle cx="16" cy="16" r="13" stroke="url(#globeGrad)" stroke-width="1.8" fill="none" />
+            <ellipse cx="16" cy="16" rx="6" ry="13" stroke="url(#globeGrad)" stroke-width="1.2" fill="none"
+              opacity="0.6" />
+            <line x1="3" y1="16" x2="29" y2="16" stroke="url(#globeGrad)" stroke-width="1.2" opacity="0.5" />
+            <line x1="5.5" y1="10" x2="26.5" y2="10" stroke="url(#globeGrad)" stroke-width="1" opacity="0.4" />
+            <line x1="5.5" y1="22" x2="26.5" y2="22" stroke="url(#globeGrad)" stroke-width="1" opacity="0.4" />
+            <rect x="9" y="19" width="3" height="5" rx="1" fill="url(#barGrad)" opacity="0.9" />
+            <rect x="14" y="15" width="3" height="9" rx="1" fill="url(#barGrad)" opacity="0.9" />
+            <rect x="19" y="11" width="3" height="13" rx="1" fill="url(#barGrad)" opacity="0.9" />
             <defs>
               <linearGradient id="globeGrad" x1="3" y1="3" x2="29" y2="29" gradientUnits="userSpaceOnUse">
-                <stop offset="0%"   stop-color="#3b82f6"/>
-                <stop offset="100%" stop-color="#06b6d4"/>
+                <stop offset="0%" stop-color="#3b82f6" />
+                <stop offset="100%" stop-color="#06b6d4" />
               </linearGradient>
               <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
-                <stop offset="0%"   stop-color="#06b6d4"/>
-                <stop offset="100%" stop-color="#3b82f6"/>
+                <stop offset="0%" stop-color="#06b6d4" />
+                <stop offset="100%" stop-color="#3b82f6" />
               </linearGradient>
             </defs>
           </svg>
@@ -47,26 +52,24 @@
 
       <!-- Desktop nav links — IDs match app.js section map -->
       <ul class="navbar__links" role="list" id="navLinks">
-        <li><a href="#dashboard"   class="navbar__link navbar__link--active" id="nav-dashboard">Dashboard</a></li>
+        <li><a href="#dashboard" class="navbar__link navbar__link--active" id="nav-dashboard">Dashboard</a></li>
         <li><a href="#predict-gdp" class="navbar__link" id="nav-predict">Predict GDP</a></li>
-        <li><a href="#classify"    class="navbar__link" id="nav-classify">Classify Country</a></li>
-        <li><a href="#insights"    class="navbar__link" id="nav-insights">Model Insights</a></li>
+        <li><a href="#classify" class="navbar__link" id="nav-classify">Classify Country</a></li>
+        <li><a href="#insights" class="navbar__link" id="nav-insights">Model Insights</a></li>
       </ul>
 
       <!-- CTA button -->
       <a href="#predict-gdp" class="navbar__cta" id="navbarCta">
         Try Predictor
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-          <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.8"
-                stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+            stroke-linejoin="round" />
         </svg>
       </a>
 
       <!-- Hamburger (mobile) — controlled by app.js -->
-      <button class="navbar__hamburger" id="hamburger"
-              aria-label="Toggle mobile menu"
-              aria-expanded="false"
-              aria-controls="navLinks">
+      <button class="navbar__hamburger" id="hamburger" aria-label="Toggle mobile menu" aria-expanded="false"
+        aria-controls="navLinks">
         <span class="hamburger__bar"></span>
         <span class="hamburger__bar"></span>
         <span class="hamburger__bar"></span>
@@ -90,7 +93,7 @@
       <!-- Glow orbs: two blurred <div>s that slowly drift (CSS animation).
            They give depth without needing any images. -->
       <div class="hero__orb hero__orb--blue" aria-hidden="true"></div>
-      <div class="hero__orb hero__orb--teal"  aria-hidden="true"></div>
+      <div class="hero__orb hero__orb--teal" aria-hidden="true"></div>
 
       <!-- ── Text + CTA block ── -->
       <div class="hero__content">
@@ -120,15 +123,14 @@
           <a href="#predict-gdp" class="btn btn--primary" id="heroPredictBtn">
             Predict GDP
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8"
-                    stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                stroke-linejoin="round" />
             </svg>
           </a>
           <a href="#classify" class="btn btn--secondary" id="heroClassifyBtn">
             Classify Country
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M2 4h12M2 8h8M2 12h5" stroke="currentColor" stroke-width="1.8"
-                    stroke-linecap="round"/>
+              <path d="M2 4h12M2 8h8M2 12h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
             </svg>
           </a>
         </div>
@@ -146,12 +148,13 @@
         <div class="stat-card" id="statCountries">
           <div class="stat-card__icon" aria-hidden="true">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="9"  stroke="url(#sg1)" stroke-width="1.5"/>
-              <ellipse cx="12" cy="12" rx="4" ry="9" stroke="url(#sg1)" stroke-width="1.2" opacity="0.6"/>
-              <line x1="3" y1="12" x2="21" y2="12" stroke="url(#sg1)" stroke-width="1.2" opacity="0.5"/>
+              <circle cx="12" cy="12" r="9" stroke="url(#sg1)" stroke-width="1.5" />
+              <ellipse cx="12" cy="12" rx="4" ry="9" stroke="url(#sg1)" stroke-width="1.2" opacity="0.6" />
+              <line x1="3" y1="12" x2="21" y2="12" stroke="url(#sg1)" stroke-width="1.2" opacity="0.5" />
               <defs>
                 <linearGradient id="sg1" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#3b82f6"/><stop offset="1" stop-color="#06b6d4"/>
+                  <stop stop-color="#3b82f6" />
+                  <stop offset="1" stop-color="#06b6d4" />
                 </linearGradient>
               </defs>
             </svg>
@@ -166,12 +169,13 @@
         <div class="stat-card stat-card--featured" id="statAccuracy">
           <div class="stat-card__icon" aria-hidden="true">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="9" stroke="url(#sg2)" stroke-width="1.5"/>
-              <circle cx="12" cy="12" r="5" stroke="url(#sg2)" stroke-width="1.5"/>
-              <circle cx="12" cy="12" r="2" fill="url(#sg2)"/>
+              <circle cx="12" cy="12" r="9" stroke="url(#sg2)" stroke-width="1.5" />
+              <circle cx="12" cy="12" r="5" stroke="url(#sg2)" stroke-width="1.5" />
+              <circle cx="12" cy="12" r="2" fill="url(#sg2)" />
               <defs>
                 <linearGradient id="sg2" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#3b82f6"/><stop offset="1" stop-color="#06b6d4"/>
+                  <stop stop-color="#3b82f6" />
+                  <stop offset="1" stop-color="#06b6d4" />
                 </linearGradient>
               </defs>
             </svg>
@@ -187,11 +191,12 @@
         <div class="stat-card" id="statR2">
           <div class="stat-card__icon" aria-hidden="true">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-              <path d="M3 18l5-5 4 3 5-6 4 2" stroke="url(#sg3)" stroke-width="1.8"
-                    stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3 18l5-5 4 3 5-6 4 2" stroke="url(#sg3)" stroke-width="1.8" stroke-linecap="round"
+                stroke-linejoin="round" />
               <defs>
                 <linearGradient id="sg3" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#3b82f6"/><stop offset="1" stop-color="#06b6d4"/>
+                  <stop stop-color="#3b82f6" />
+                  <stop offset="1" stop-color="#06b6d4" />
                 </linearGradient>
               </defs>
             </svg>
@@ -235,24 +240,19 @@
       <div class="predictor-card">
 
         <!-- Model selector pills -->
-        <div class="model-selector" id="gdpModelSelector" role="group"
-             aria-label="Choose regression model">
+        <div class="model-selector" id="gdpModelSelector" role="group" aria-label="Choose regression model">
           <span class="model-selector__label">Model:</span>
           <div class="model-pills" id="gdpModelPills">
-            <button type="button" class="model-pill model-pill--active"
-                    data-model="best" id="gpill-best">⭐ Best</button>
-            <button type="button" class="model-pill"
-                    data-model="random_forest" id="gpill-rf">Random Forest</button>
-            <button type="button" class="model-pill"
-                    data-model="linear_regression" id="gpill-lr">Linear Regression</button>
-            <button type="button" class="model-pill"
-                    data-model="gradient_boosting" id="gpill-gb">Gradient Boosting</button>
-            <button type="button" class="model-pill"
-                    data-model="xgboost" id="gpill-xgb">XGBoost</button>
-            <button type="button" class="model-pill"
-                    data-model="svm" id="gpill-svm">SVM</button>
-            <button type="button" class="model-pill"
-                    data-model="mlp" id="gpill-mlp">MLP</button>
+            <button type="button" class="model-pill model-pill--active" data-model="best" id="gpill-best">⭐
+              Best</button>
+            <button type="button" class="model-pill" data-model="random_forest" id="gpill-rf">Random Forest</button>
+            <button type="button" class="model-pill" data-model="linear_regression" id="gpill-lr">Linear
+              Regression</button>
+            <button type="button" class="model-pill" data-model="gradient_boosting" id="gpill-gb">Gradient
+              Boosting</button>
+            <button type="button" class="model-pill" data-model="xgboost" id="gpill-xgb">XGBoost</button>
+            <button type="button" class="model-pill" data-model="svm" id="gpill-svm">SVM</button>
+            <button type="button" class="model-pill" data-model="mlp" id="gpill-mlp">MLP</button>
           </div>
           <button type="button" class="btn btn--secondary btn--sm" id="gdpCompareAllBtn">
             Compare All ▶
@@ -285,43 +285,43 @@
             <div class="form-col">
               <div class="form-group">
                 <label class="form-label" for="population">Population</label>
-                <input class="form-input" type="number" id="population" name="population"
-                       placeholder="e.g. 32900000" min="0" required />
+                <input class="form-input" type="number" id="population" name="population" placeholder="e.g. 32900000"
+                  min="0" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="area">Area (sq. mi.)</label>
-                <input class="form-input" type="number" id="area" name="area"
-                       placeholder="e.g. 647500" min="0" required />
+                <input class="form-input" type="number" id="area" name="area" placeholder="e.g. 647500" min="0"
+                  required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="pop_density">Pop. Density (per sq. mi.)</label>
-                <input class="form-input" type="number" id="pop_density" name="pop_density"
-                       placeholder="e.g. 48.0" min="0" step="0.1" required />
+                <input class="form-input" type="number" id="pop_density" name="pop_density" placeholder="e.g. 48.0"
+                  min="0" step="0.1" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="coastline">Coastline (coast/area ratio)</label>
-                <input class="form-input" type="number" id="coastline" name="coastline"
-                       placeholder="e.g. 0.07" min="0" step="0.01" required />
+                <input class="form-input" type="number" id="coastline" name="coastline" placeholder="e.g. 0.07" min="0"
+                  step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="net_migration">Net Migration</label>
-                <input class="form-input" type="number" id="net_migration" name="net_migration"
-                       placeholder="e.g. 23.06" step="0.01" required />
+                <input class="form-input" type="number" id="net_migration" name="net_migration" placeholder="e.g. 23.06"
+                  step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="infant_mortality">Infant Mortality (per 1000)</label>
                 <input class="form-input" type="number" id="infant_mortality" name="infant_mortality"
-                       placeholder="e.g. 163.07" min="0" step="0.01" required />
+                  placeholder="e.g. 163.07" min="0" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="gdp_per_capita">Current GDP per Capita ($)</label>
-                <input class="form-input" type="number" id="gdp_per_capita" name="gdp_per_capita"
-                       placeholder="e.g. 700" min="0" step="0.01" required />
+                <input class="form-input" type="number" id="gdp_per_capita" name="gdp_per_capita" placeholder="e.g. 700"
+                  min="0" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="climate">Climate Zone (1–5)</label>
-                <input class="form-input" type="number" id="climate" name="climate"
-                       placeholder="e.g. 1" min="1" max="5" step="0.5" required />
+                <input class="form-input" type="number" id="climate" name="climate" placeholder="e.g. 1" min="1" max="5"
+                  step="0.5" required />
               </div>
             </div>
 
@@ -329,38 +329,38 @@
             <div class="form-col">
               <div class="form-group">
                 <label class="form-label" for="literacy">Literacy (%)</label>
-                <input class="form-input" type="number" id="literacy" name="literacy"
-                       placeholder="e.g. 36.0" min="0" max="100" step="0.1" required />
+                <input class="form-input" type="number" id="literacy" name="literacy" placeholder="e.g. 36.0" min="0"
+                  max="100" step="0.1" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="phones_per_1000">Phones (per 1000)</label>
                 <input class="form-input" type="number" id="phones_per_1000" name="phones_per_1000"
-                       placeholder="e.g. 3.2" min="0" step="0.1" required />
+                  placeholder="e.g. 3.2" min="0" step="0.1" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="arable">Arable Land (%)</label>
-                <input class="form-input" type="number" id="arable" name="arable"
-                       placeholder="e.g. 12.13" min="0" max="100" step="0.01" required />
+                <input class="form-input" type="number" id="arable" name="arable" placeholder="e.g. 12.13" min="0"
+                  max="100" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="crops">Crops (%)</label>
-                <input class="form-input" type="number" id="crops" name="crops"
-                       placeholder="e.g. 0.22" min="0" max="100" step="0.01" required />
+                <input class="form-input" type="number" id="crops" name="crops" placeholder="e.g. 0.22" min="0"
+                  max="100" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="other">Other Land (%)</label>
-                <input class="form-input" type="number" id="other" name="other"
-                       placeholder="e.g. 87.65" min="0" max="100" step="0.01" required />
+                <input class="form-input" type="number" id="other" name="other" placeholder="e.g. 87.65" min="0"
+                  max="100" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="birthrate">Birthrate</label>
-                <input class="form-input" type="number" id="birthrate" name="birthrate"
-                       placeholder="e.g. 46.6" min="0" step="0.1" required />
+                <input class="form-input" type="number" id="birthrate" name="birthrate" placeholder="e.g. 46.6" min="0"
+                  step="0.1" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="deathrate">Deathrate</label>
-                <input class="form-input" type="number" id="deathrate" name="deathrate"
-                       placeholder="e.g. 20.34" min="0" step="0.01" required />
+                <input class="form-input" type="number" id="deathrate" name="deathrate" placeholder="e.g. 20.34" min="0"
+                  step="0.01" required />
               </div>
             </div>
           </div><!-- /form-grid -->
@@ -369,18 +369,18 @@
           <div class="form-row-3">
             <div class="form-group">
               <label class="form-label" for="agriculture">Agriculture (%)</label>
-              <input class="form-input" type="number" id="agriculture" name="agriculture"
-                     placeholder="e.g. 0.38" min="0" max="1" step="0.01" required />
+              <input class="form-input" type="number" id="agriculture" name="agriculture" placeholder="e.g. 0.38"
+                min="0" max="1" step="0.01" required />
             </div>
             <div class="form-group">
               <label class="form-label" for="industry">Industry (%)</label>
-              <input class="form-input" type="number" id="industry" name="industry"
-                     placeholder="e.g. 0.24" min="0" max="1" step="0.01" required />
+              <input class="form-input" type="number" id="industry" name="industry" placeholder="e.g. 0.24" min="0"
+                max="1" step="0.01" required />
             </div>
             <div class="form-group">
               <label class="form-label" for="service">Service (%)</label>
-              <input class="form-input" type="number" id="service" name="service"
-                     placeholder="e.g. 0.38" min="0" max="1" step="0.01" required />
+              <input class="form-input" type="number" id="service" name="service" placeholder="e.g. 0.38" min="0"
+                max="1" step="0.01" required />
             </div>
           </div>
 
@@ -412,8 +412,8 @@
             <!-- Spinner shown while waiting for API -->
             <span class="btn-spinner" aria-hidden="true"></span>
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true" class="btn-icon">
-              <path d="M3 9h12M10 4l5 5-5 5" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3 9h12M10 4l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
             </svg>
           </button>
 
@@ -436,9 +436,8 @@
               <span class="confidence-label">Model Confidence</span>
               <span class="confidence-pct" id="gdpConfidencePct">78%</span>
             </div>
-            <div class="confidence-track" role="progressbar"
-                 aria-valuenow="78" aria-valuemin="0" aria-valuemax="100"
-                 aria-label="Model confidence 78%">
+            <div class="confidence-track" role="progressbar" aria-valuenow="78" aria-valuemin="0" aria-valuemax="100"
+              aria-label="Model confidence 78%">
               <!-- Width set by JS via CSS custom property -->
               <div class="confidence-fill" id="gdpConfidenceFill"></div>
             </div>
@@ -474,9 +473,8 @@
         <div class="autofill-banner">
           <div class="autofill-banner__text">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-              <path d="M9 2v14M2 9h14" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" opacity="0.5"/>
-              <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M9 2v14M2 9h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.5" />
+              <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5" />
             </svg>
             Already filled out the GDP Predictor?
           </div>
@@ -486,26 +484,20 @@
         </div>
 
         <!-- Model selector pills -->
-        <div class="model-selector" id="classifyModelSelector" role="group"
-             aria-label="Choose classification model">
+        <div class="model-selector" id="classifyModelSelector" role="group" aria-label="Choose classification model">
           <span class="model-selector__label">Model:</span>
           <div class="model-pills" id="classifyModelPills">
-            <button type="button" class="model-pill model-pill--active"
-                    data-model="best" id="mpill-best">⭐ Best</button>
-            <button type="button" class="model-pill"
-                    data-model="random_forest" id="mpill-rf">Random Forest</button>
-            <button type="button" class="model-pill"
-                    data-model="logistic_regression" id="mpill-lr">Logistic Regression</button>
-            <button type="button" class="model-pill"
-                    data-model="knn" id="mpill-knn">KNN</button>
-            <button type="button" class="model-pill"
-                    data-model="xgboost" id="mpill-xgb">XGBoost</button>
-            <button type="button" class="model-pill"
-                    data-model="svm" id="mpill-svm">SVM</button>
-            <button type="button" class="model-pill"
-                    data-model="gaussian_naive_bayes" id="mpill-gnb">Naive Bayes</button>
-            <button type="button" class="model-pill"
-                    data-model="mlp" id="mpill-mlp">MLP</button>
+            <button type="button" class="model-pill model-pill--active" data-model="best" id="mpill-best">⭐
+              Best</button>
+            <button type="button" class="model-pill" data-model="random_forest" id="mpill-rf">Random Forest</button>
+            <button type="button" class="model-pill" data-model="logistic_regression" id="mpill-lr">Logistic
+              Regression</button>
+            <button type="button" class="model-pill" data-model="knn" id="mpill-knn">KNN</button>
+            <button type="button" class="model-pill" data-model="xgboost" id="mpill-xgb">XGBoost</button>
+            <button type="button" class="model-pill" data-model="svm" id="mpill-svm">SVM</button>
+            <button type="button" class="model-pill" data-model="gaussian_naive_bayes" id="mpill-gnb">Naive
+              Bayes</button>
+            <button type="button" class="model-pill" data-model="mlp" id="mpill-mlp">MLP</button>
           </div>
           <button type="button" class="btn btn--secondary btn--sm" id="compareAllBtn">
             Compare All ▶
@@ -536,81 +528,81 @@
             <div class="form-col">
               <div class="form-group">
                 <label class="form-label" for="c-population">Population</label>
-                <input class="form-input" type="number" id="c-population" name="population"
-                       placeholder="e.g. 32900000" min="0" required />
+                <input class="form-input" type="number" id="c-population" name="population" placeholder="e.g. 32900000"
+                  min="0" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="c-area">Area (sq. mi.)</label>
-                <input class="form-input" type="number" id="c-area" name="area"
-                       placeholder="e.g. 647500" min="0" required />
+                <input class="form-input" type="number" id="c-area" name="area" placeholder="e.g. 647500" min="0"
+                  required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="c-pop_density">Pop. Density (per sq. mi.)</label>
-                <input class="form-input" type="number" id="c-pop_density" name="pop_density"
-                       placeholder="e.g. 48.0" min="0" step="0.1" required />
+                <input class="form-input" type="number" id="c-pop_density" name="pop_density" placeholder="e.g. 48.0"
+                  min="0" step="0.1" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="c-coastline">Coastline (coast/area ratio)</label>
-                <input class="form-input" type="number" id="c-coastline" name="coastline"
-                       placeholder="e.g. 0.07" min="0" step="0.01" required />
+                <input class="form-input" type="number" id="c-coastline" name="coastline" placeholder="e.g. 0.07"
+                  min="0" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="c-net_migration">Net Migration</label>
                 <input class="form-input" type="number" id="c-net_migration" name="net_migration"
-                       placeholder="e.g. 23.06" step="0.01" required />
+                  placeholder="e.g. 23.06" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="c-infant_mortality">Infant Mortality (per 1000)</label>
                 <input class="form-input" type="number" id="c-infant_mortality" name="infant_mortality"
-                       placeholder="e.g. 163.07" min="0" step="0.01" required />
+                  placeholder="e.g. 163.07" min="0" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="c-gdp_per_capita">Current GDP per Capita ($)</label>
                 <input class="form-input" type="number" id="c-gdp_per_capita" name="gdp_per_capita"
-                       placeholder="e.g. 700" min="0" step="0.01" required />
+                  placeholder="e.g. 700" min="0" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="c-climate">Climate Zone (1–5)</label>
-                <input class="form-input" type="number" id="c-climate" name="climate"
-                       placeholder="e.g. 1" min="1" max="5" step="0.5" required />
+                <input class="form-input" type="number" id="c-climate" name="climate" placeholder="e.g. 1" min="1"
+                  max="5" step="0.5" required />
               </div>
             </div>
 
             <div class="form-col">
               <div class="form-group">
                 <label class="form-label" for="c-literacy">Literacy (%)</label>
-                <input class="form-input" type="number" id="c-literacy" name="literacy"
-                       placeholder="e.g. 36.0" min="0" max="100" step="0.1" required />
+                <input class="form-input" type="number" id="c-literacy" name="literacy" placeholder="e.g. 36.0" min="0"
+                  max="100" step="0.1" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="c-phones_per_1000">Phones (per 1000)</label>
                 <input class="form-input" type="number" id="c-phones_per_1000" name="phones_per_1000"
-                       placeholder="e.g. 3.2" min="0" step="0.1" required />
+                  placeholder="e.g. 3.2" min="0" step="0.1" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="c-arable">Arable Land (%)</label>
-                <input class="form-input" type="number" id="c-arable" name="arable"
-                       placeholder="e.g. 12.13" min="0" max="100" step="0.01" required />
+                <input class="form-input" type="number" id="c-arable" name="arable" placeholder="e.g. 12.13" min="0"
+                  max="100" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="c-crops">Crops (%)</label>
-                <input class="form-input" type="number" id="c-crops" name="crops"
-                       placeholder="e.g. 0.22" min="0" max="100" step="0.01" required />
+                <input class="form-input" type="number" id="c-crops" name="crops" placeholder="e.g. 0.22" min="0"
+                  max="100" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="c-other">Other Land (%)</label>
-                <input class="form-input" type="number" id="c-other" name="other"
-                       placeholder="e.g. 87.65" min="0" max="100" step="0.01" required />
+                <input class="form-input" type="number" id="c-other" name="other" placeholder="e.g. 87.65" min="0"
+                  max="100" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="c-birthrate">Birthrate</label>
-                <input class="form-input" type="number" id="c-birthrate" name="birthrate"
-                       placeholder="e.g. 46.6" min="0" step="0.1" required />
+                <input class="form-input" type="number" id="c-birthrate" name="birthrate" placeholder="e.g. 46.6"
+                  min="0" step="0.1" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="c-deathrate">Deathrate</label>
-                <input class="form-input" type="number" id="c-deathrate" name="deathrate"
-                       placeholder="e.g. 20.34" min="0" step="0.01" required />
+                <input class="form-input" type="number" id="c-deathrate" name="deathrate" placeholder="e.g. 20.34"
+                  min="0" step="0.01" required />
               </div>
             </div>
           </div><!-- /form-grid -->
@@ -619,18 +611,18 @@
           <div class="form-row-3">
             <div class="form-group">
               <label class="form-label" for="c-agriculture">Agriculture (%)</label>
-              <input class="form-input" type="number" id="c-agriculture" name="agriculture"
-                     placeholder="e.g. 0.38" min="0" max="1" step="0.01" required />
+              <input class="form-input" type="number" id="c-agriculture" name="agriculture" placeholder="e.g. 0.38"
+                min="0" max="1" step="0.01" required />
             </div>
             <div class="form-group">
               <label class="form-label" for="c-industry">Industry (%)</label>
-              <input class="form-input" type="number" id="c-industry" name="industry"
-                     placeholder="e.g. 0.24" min="0" max="1" step="0.01" required />
+              <input class="form-input" type="number" id="c-industry" name="industry" placeholder="e.g. 0.24" min="0"
+                max="1" step="0.01" required />
             </div>
             <div class="form-group">
               <label class="form-label" for="c-service">Service (%)</label>
-              <input class="form-input" type="number" id="c-service" name="service"
-                     placeholder="e.g. 0.38" min="0" max="1" step="0.01" required />
+              <input class="form-input" type="number" id="c-service" name="service" placeholder="e.g. 0.38" min="0"
+                max="1" step="0.01" required />
             </div>
           </div>
 
@@ -658,11 +650,10 @@
           <button type="submit" class="btn btn--primary btn--lg" id="classifySubmitBtn">
             <span class="btn-label">Classify Economy</span>
             <span class="btn-spinner" aria-hidden="true"></span>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"
-                 aria-hidden="true" class="btn-icon">
-              <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="2"/>
-              <path d="M6 9l2 2 4-4" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round"/>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true" class="btn-icon">
+              <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="2" />
+              <path d="M6 9l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
             </svg>
           </button>
 
@@ -747,9 +738,8 @@
         <div class="autofill-banner">
           <div class="autofill-banner__text">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-              <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M9 6v3l2 2" stroke="currentColor" stroke-width="1.5"
-                    stroke-linecap="round"/>
+              <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5" />
+              <path d="M9 6v3l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
             </svg>
             Find a country's cluster assignment using the same indicators
           </div>
@@ -759,16 +749,13 @@
         </div>
 
         <!-- Model selector pills -->
-        <div class="model-selector" id="clusterModelSelector" role="group"
-             aria-label="Choose clustering model">
+        <div class="model-selector" id="clusterModelSelector" role="group" aria-label="Choose clustering model">
           <span class="model-selector__label">Model:</span>
           <div class="model-pills" id="clusterModelPills">
-            <button type="button" class="model-pill model-pill--active"
-                    data-model="kmeans" id="cpill-kmeans">KMeans</button>
-            <button type="button" class="model-pill"
-                    data-model="hierarchical" id="cpill-hc">Hierarchical</button>
-            <button type="button" class="model-pill"
-                    data-model="dbscan" id="cpill-dbscan">DBSCAN</button>
+            <button type="button" class="model-pill model-pill--active" data-model="kmeans"
+              id="cpill-kmeans">KMeans</button>
+            <button type="button" class="model-pill" data-model="hierarchical" id="cpill-hc">Hierarchical</button>
+            <button type="button" class="model-pill" data-model="dbscan" id="cpill-dbscan">DBSCAN</button>
           </div>
           <button type="button" class="btn btn--secondary btn--sm" id="clusterCompareAllBtn">
             Compare All ▶
@@ -799,43 +786,43 @@
             <div class="form-col">
               <div class="form-group">
                 <label class="form-label" for="k-population">Population</label>
-                <input class="form-input" type="number" id="k-population" name="population"
-                       placeholder="e.g. 32900000" min="0" required />
+                <input class="form-input" type="number" id="k-population" name="population" placeholder="e.g. 32900000"
+                  min="0" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="k-area">Area (sq. mi.)</label>
-                <input class="form-input" type="number" id="k-area" name="area"
-                       placeholder="e.g. 647500" min="0" required />
+                <input class="form-input" type="number" id="k-area" name="area" placeholder="e.g. 647500" min="0"
+                  required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="k-pop_density">Pop. Density</label>
-                <input class="form-input" type="number" id="k-pop_density" name="pop_density"
-                       placeholder="e.g. 48.0" min="0" step="0.1" required />
+                <input class="form-input" type="number" id="k-pop_density" name="pop_density" placeholder="e.g. 48.0"
+                  min="0" step="0.1" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="k-coastline">Coastline Ratio</label>
-                <input class="form-input" type="number" id="k-coastline" name="coastline"
-                       placeholder="e.g. 0.07" min="0" step="0.01" required />
+                <input class="form-input" type="number" id="k-coastline" name="coastline" placeholder="e.g. 0.07"
+                  min="0" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="k-net_migration">Net Migration</label>
                 <input class="form-input" type="number" id="k-net_migration" name="net_migration"
-                       placeholder="e.g. 23.06" step="0.01" required />
+                  placeholder="e.g. 23.06" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="k-infant_mortality">Infant Mortality</label>
                 <input class="form-input" type="number" id="k-infant_mortality" name="infant_mortality"
-                       placeholder="e.g. 163.07" min="0" step="0.01" required />
+                  placeholder="e.g. 163.07" min="0" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="k-gdp_per_capita">GDP per Capita ($)</label>
                 <input class="form-input" type="number" id="k-gdp_per_capita" name="gdp_per_capita"
-                       placeholder="e.g. 700" min="0" step="0.01" required />
+                  placeholder="e.g. 700" min="0" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="k-climate">Climate Zone (1–5)</label>
-                <input class="form-input" type="number" id="k-climate" name="climate"
-                       placeholder="e.g. 1" min="1" max="5" step="0.5" required />
+                <input class="form-input" type="number" id="k-climate" name="climate" placeholder="e.g. 1" min="1"
+                  max="5" step="0.5" required />
               </div>
             </div>
 
@@ -843,38 +830,38 @@
             <div class="form-col">
               <div class="form-group">
                 <label class="form-label" for="k-literacy">Literacy (%)</label>
-                <input class="form-input" type="number" id="k-literacy" name="literacy"
-                       placeholder="e.g. 36.0" min="0" max="100" step="0.1" required />
+                <input class="form-input" type="number" id="k-literacy" name="literacy" placeholder="e.g. 36.0" min="0"
+                  max="100" step="0.1" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="k-phones_per_1000">Phones per 1000</label>
                 <input class="form-input" type="number" id="k-phones_per_1000" name="phones_per_1000"
-                       placeholder="e.g. 3.2" min="0" step="0.1" required />
+                  placeholder="e.g. 3.2" min="0" step="0.1" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="k-arable">Arable Land (%)</label>
-                <input class="form-input" type="number" id="k-arable" name="arable"
-                       placeholder="e.g. 12.13" min="0" max="100" step="0.01" required />
+                <input class="form-input" type="number" id="k-arable" name="arable" placeholder="e.g. 12.13" min="0"
+                  max="100" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="k-crops">Crops (%)</label>
-                <input class="form-input" type="number" id="k-crops" name="crops"
-                       placeholder="e.g. 0.22" min="0" max="100" step="0.01" required />
+                <input class="form-input" type="number" id="k-crops" name="crops" placeholder="e.g. 0.22" min="0"
+                  max="100" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="k-other">Other Land (%)</label>
-                <input class="form-input" type="number" id="k-other" name="other"
-                       placeholder="e.g. 87.65" min="0" max="100" step="0.01" required />
+                <input class="form-input" type="number" id="k-other" name="other" placeholder="e.g. 87.65" min="0"
+                  max="100" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="k-birthrate">Birthrate</label>
-                <input class="form-input" type="number" id="k-birthrate" name="birthrate"
-                       placeholder="e.g. 46.6" min="0" step="0.1" required />
+                <input class="form-input" type="number" id="k-birthrate" name="birthrate" placeholder="e.g. 46.6"
+                  min="0" step="0.1" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="k-deathrate">Deathrate</label>
-                <input class="form-input" type="number" id="k-deathrate" name="deathrate"
-                       placeholder="e.g. 20.34" min="0" step="0.01" required />
+                <input class="form-input" type="number" id="k-deathrate" name="deathrate" placeholder="e.g. 20.34"
+                  min="0" step="0.01" required />
               </div>
             </div>
           </div><!-- /form-grid -->
@@ -882,18 +869,18 @@
           <div class="form-row-3">
             <div class="form-group">
               <label class="form-label" for="k-agriculture">Agriculture (%)</label>
-              <input class="form-input" type="number" id="k-agriculture" name="agriculture"
-                     placeholder="e.g. 0.38" min="0" max="1" step="0.01" required />
+              <input class="form-input" type="number" id="k-agriculture" name="agriculture" placeholder="e.g. 0.38"
+                min="0" max="1" step="0.01" required />
             </div>
             <div class="form-group">
               <label class="form-label" for="k-industry">Industry (%)</label>
-              <input class="form-input" type="number" id="k-industry" name="industry"
-                     placeholder="e.g. 0.24" min="0" max="1" step="0.01" required />
+              <input class="form-input" type="number" id="k-industry" name="industry" placeholder="e.g. 0.24" min="0"
+                max="1" step="0.01" required />
             </div>
             <div class="form-group">
               <label class="form-label" for="k-service">Service (%)</label>
-              <input class="form-input" type="number" id="k-service" name="service"
-                     placeholder="e.g. 0.38" min="0" max="1" step="0.01" required />
+              <input class="form-input" type="number" id="k-service" name="service" placeholder="e.g. 0.38" min="0"
+                max="1" step="0.01" required />
             </div>
           </div>
 
@@ -921,10 +908,9 @@
           <button type="submit" class="btn btn--primary btn--lg" id="clusterSubmitBtn">
             <span class="btn-label">Find My Cluster</span>
             <span class="btn-spinner" aria-hidden="true"></span>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"
-                 aria-hidden="true" class="btn-icon">
-              <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="2"/>
-              <circle cx="9" cy="9" r="3" fill="currentColor"/>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true" class="btn-icon">
+              <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="2" />
+              <circle cx="9" cy="9" r="3" fill="currentColor" />
             </svg>
           </button>
 
@@ -979,17 +965,15 @@
         <!-- Centre: team members -->
         <ul class="site-footer__team" role="list" aria-label="Team members">
           <li class="site-footer__team-label">Team</li>
-          <li>Haseeb</li>
-          <li>Member 2</li>
-          <li>Member 3</li>
+          <li>Abdul Rehman</li>
+          <li>Haseeb Syed</li>
+          <li>Talha Sheikh</li>
+          <li>Muhammad Taha</li>
         </ul>
 
         <!-- Right: GitHub link -->
-        <a href="https://github.com/haseeb4888/Machine-Learning-AI-221-project"
-           class="site-footer__github"
-           target="_blank"
-           rel="noopener noreferrer"
-           aria-label="View source on GitHub">
+        <a href="https://github.com/haseeb4888-code/Machine-Learning-AI-221-project" class="site-footer__github"
+          target="_blank" rel="noopener noreferrer" aria-label="View source on GitHub">
           <!-- GitHub SVG icon -->
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839
@@ -998,7 +982,7 @@
             0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004
             1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688
             0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019
-            10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+            10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
           </svg>
           View on GitHub
         </a>
@@ -1012,4 +996,5 @@
     </div><!-- /inner -->
   </footer>
 </body>
+
 </html>
