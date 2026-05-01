@@ -36,6 +36,16 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-ci.txt
 
+      - name: Code checks (lint + syntax)
+        run: |
+          python -m compileall src tests
+          python -m pip install ruff
+          ruff check src tests
+
+      - name: Dependency sanity check
+        run: |
+          python -m pip check
+
       - name: Run tests
         run: |
           pytest -q
