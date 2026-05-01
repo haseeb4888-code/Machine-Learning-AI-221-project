@@ -233,6 +233,49 @@
 
       <!-- Form card -->
       <div class="predictor-card">
+
+        <!-- Model selector pills -->
+        <div class="model-selector" id="gdpModelSelector" role="group"
+             aria-label="Choose regression model">
+          <span class="model-selector__label">Model:</span>
+          <div class="model-pills" id="gdpModelPills">
+            <button type="button" class="model-pill model-pill--active"
+                    data-model="best" id="gpill-best">⭐ Best</button>
+            <button type="button" class="model-pill"
+                    data-model="random_forest" id="gpill-rf">Random Forest</button>
+            <button type="button" class="model-pill"
+                    data-model="linear_regression" id="gpill-lr">Linear Regression</button>
+            <button type="button" class="model-pill"
+                    data-model="gradient_boosting" id="gpill-gb">Gradient Boosting</button>
+            <button type="button" class="model-pill"
+                    data-model="xgboost" id="gpill-xgb">XGBoost</button>
+            <button type="button" class="model-pill"
+                    data-model="svm" id="gpill-svm">SVM</button>
+            <button type="button" class="model-pill"
+                    data-model="mlp" id="gpill-mlp">MLP</button>
+          </div>
+          <button type="button" class="btn btn--secondary btn--sm" id="gdpCompareAllBtn">
+            Compare All ▶
+          </button>
+        </div>
+
+        <!-- Compare-all results table -->
+        <div class="compare-table-wrap" id="gdpCompareTableWrap" hidden>
+          <p class="compare-table-wrap__title">All Regressors — Predicted GDP</p>
+          <table class="compare-table" id="gdpCompareTable">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Predicted GDP / capita</th>
+                <th>Model Name</th>
+              </tr>
+            </thead>
+            <tbody id="gdpCompareTableBody">
+              <!-- Rows injected by JS -->
+            </tbody>
+          </table>
+        </div>
+
         <form id="gdpForm" class="predictor-form" novalidate>
 
           <!-- Two-column input grid -->
@@ -713,6 +756,40 @@
           <button type="button" class="btn btn--secondary btn--sm" id="clusterAutofillBtn">
             Copy values from Predictor ↑
           </button>
+        </div>
+
+        <!-- Model selector pills -->
+        <div class="model-selector" id="clusterModelSelector" role="group"
+             aria-label="Choose clustering model">
+          <span class="model-selector__label">Model:</span>
+          <div class="model-pills" id="clusterModelPills">
+            <button type="button" class="model-pill model-pill--active"
+                    data-model="kmeans" id="cpill-kmeans">KMeans</button>
+            <button type="button" class="model-pill"
+                    data-model="hierarchical" id="cpill-hc">Hierarchical</button>
+            <button type="button" class="model-pill"
+                    data-model="dbscan" id="cpill-dbscan">DBSCAN</button>
+          </div>
+          <button type="button" class="btn btn--secondary btn--sm" id="clusterCompareAllBtn">
+            Compare All ▶
+          </button>
+        </div>
+
+        <!-- Compare-all results table -->
+        <div class="compare-table-wrap" id="clusterCompareTableWrap" hidden>
+          <p class="compare-table-wrap__title">All Models — Comparison</p>
+          <table class="compare-table" id="clusterCompareTable">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Cluster Assignment</th>
+                <th>Silhouette Score</th>
+              </tr>
+            </thead>
+            <tbody id="clusterCompareTableBody">
+              <!-- Rows injected by JS -->
+            </tbody>
+          </table>
         </div>
 
         <form id="clusterForm" class="predictor-form" novalidate>

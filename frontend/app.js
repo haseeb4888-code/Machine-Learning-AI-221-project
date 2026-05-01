@@ -408,11 +408,41 @@
   const confidenceFill= document.getElementById('gdpConfidenceFill');
   const confidencePct = document.getElementById('gdpConfidencePct');
   const modelUsed     = document.getElementById('gdpModelUsed');
+  const pillsContainer  = document.getElementById('gdpModelPills');
+  const gdpCompareBtn   = document.getElementById('gdpCompareAllBtn');
+  const gdpCompareWrap  = document.getElementById('gdpCompareTableWrap');
+  const gdpCompareTbody = document.getElementById('gdpCompareTableBody');
 
   if (!form) return;   // guard: section not in DOM yet
 
   /* API base URL — change to your deployed URL in production */
   const API_BASE = 'http://localhost:8000';
+
+  /* All 6 regression models */
+  const ALL_REGRESSORS = [
+    { key: 'random_forest',      label: 'Random Forest'      },
+    { key: 'linear_regression',  label: 'Linear Regression'  },
+    { key: 'gradient_boosting',  label: 'Gradient Boosting'  },
+    { key: 'xgboost',            label: 'XGBoost'            },
+    { key: 'svm',                label: 'SVM'                },
+    { key: 'mlp',                label: 'MLP'                },
+  ];
+
+  /* Currently selected model — 'best' means API picks automatically */
+  let selectedModel = 'best';
+
+  /* ── Pill selector ──────────────────────────────────────── */
+  if (pillsContainer) {
+    pillsContainer.addEventListener('click', (e) => {
+      const pill = e.target.closest('.model-pill');
+      if (!pill) return;
+      pillsContainer.querySelectorAll('.model-pill').forEach(p =>
+        p.classList.remove('model-pill--active')
+      );
+      pill.classList.add('model-pill--active');
+      selectedModel = pill.dataset.model;
+    });
+  }
 
   /* ── Field names expected by the FastAPI /predict/gdp endpoint ── */
   const FIELD_NAMES = [
@@ -539,7 +569,12 @@
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE}/predict/gdp`, {
+      // Append model_name query param unless user chose 'best'
+      const url = selectedModel && selectedModel !== 'best'
+        ? `${API_BASE}/predict/gdp?model_name=${encodeURIComponent(selectedModel)}`
+        : `${API_BASE}/predict/gdp`;
+
+      const response = await fetch(url, {
         method : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body   : JSON.stringify(data),
@@ -568,6 +603,63 @@
     const el = document.getElementById(name);
     if (el) el.addEventListener('input', () => el.classList.remove('is-invalid'));
   });
+
+  /* ── Compare All regressors ─────────────────────────────── */
+  if (gdpCompareBtn) {
+    gdpCompareBtn.addEventListener('click', async () => {
+      const data = collectFormData();
+      if (!data) { showError('Fill in all fields first, then click Compare All.'); return; }
+      clearError();
+
+      // Show table with pending rows immediately
+      if (gdpCompareWrap) gdpCompareWrap.removeAttribute('hidden');
+      if (gdpCompareTbody) {
+        gdpCompareTbody.innerHTML = ALL_REGRESSORS.map(m =>
+          `<tr id="gtr-${m.key}">
+            <td>${m.label}</td>
+            <td style="color:var(--color-text-faint)">…</td>
+            <td style="color:var(--color-text-faint)">Pending</td>
+          </tr>`
+        ).join('');
+      }
+
+      // Fire all 6 requests in parallel
+      const requests = ALL_REGRESSORS.map(m =>
+        fetch(`${API_BASE}/predict/gdp?model_name=${encodeURIComponent(m.key)}`, {
+          method : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body   : JSON.stringify(data),
+        })
+        .then(r => r.json())
+        .then(json => ({ model: m, result: json, ok: true }))
+        .catch(err => ({ model: m, error: err, ok: false }))
+      );
+
+      const results = await Promise.allSettled(requests);
+
+      results.forEach(settled => {
+        const item = settled.value || settled.reason;
+        const row  = document.getElementById(`gtr-${item.model.key}`);
+        if (!row) return;
+
+        if (!item.ok || !item.result || item.result.predicted_value == null) {
+          row.cells[1].textContent = 'Error';
+          row.cells[1].style.color = '#f87171';
+          row.cells[2].textContent = 'API error';
+          return;
+        }
+
+        const val = formatUSD(item.result.predicted_value);
+        row.cells[1].innerHTML =
+          `<strong style="color:var(--color-text)">${val}</strong> <span style="color:var(--color-text-faint);font-size:0.75rem">per capita</span>`;
+        row.cells[2].textContent = item.result.model_used || item.model.label;
+      });
+
+      setTimeout(() => {
+        if (gdpCompareWrap) gdpCompareWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    });
+  }
 
 })();
 
@@ -931,6 +1023,10 @@
   const clusterSilEl = document.getElementById('clusterSilhouetteEl');
   const clusterModEl = document.getElementById('clusterModelEl');
   const autofillBtn  = document.getElementById('clusterAutofillBtn');
+  const clusterPillsContainer = document.getElementById('clusterModelPills');
+  const clusterCompareBtn   = document.getElementById('clusterCompareAllBtn');
+  const clusterCompareWrap  = document.getElementById('clusterCompareTableWrap');
+  const clusterCompareTbody = document.getElementById('clusterCompareTableBody');
 
   /* Stats bar elements */
   const csClusterEl   = document.querySelector('#cs-clusters .cluster-stat-item__value');
@@ -948,6 +1044,29 @@
     'agriculture', 'industry', 'service'
   ];
   const REGION_ID = 'k-region';
+
+  /* All clustering models */
+  const ALL_CLUSTERING_MODELS = [
+    { key: 'kmeans',       label: 'KMeans'       },
+    { key: 'hierarchical', label: 'Hierarchical' },
+    { key: 'dbscan',       label: 'DBSCAN'       },
+  ];
+
+  /* Currently selected clustering model */
+  let selectedClusterModel = 'kmeans';
+
+  /* ── Pill selector ──────────────────────────────────────── */
+  if (clusterPillsContainer) {
+    clusterPillsContainer.addEventListener('click', (e) => {
+      const pill = e.target.closest('.model-pill');
+      if (!pill) return;
+      clusterPillsContainer.querySelectorAll('.model-pill').forEach(p =>
+        p.classList.remove('model-pill--active')
+      );
+      pill.classList.add('model-pill--active');
+      selectedClusterModel = pill.dataset.model;
+    });
+  }
 
   /* ── Load cluster summary on page load ─────────────────── */
   async function loadClusterSummary() {
@@ -1092,7 +1211,10 @@
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/analyze/clusters`, {
+      // Append model_name query param
+      const url = `${API_BASE}/analyze/clusters?model_name=${encodeURIComponent(selectedClusterModel)}`;
+
+      const res = await fetch(url, {
         method : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body   : JSON.stringify(data),
@@ -1121,5 +1243,70 @@
     const el = document.getElementById('k-' + name);
     if (el) el.addEventListener('input', () => el.classList.remove('is-invalid'));
   });
+
+  /* ── Compare All clustering models ──────────────────────── */
+  if (clusterCompareBtn) {
+    clusterCompareBtn.addEventListener('click', async () => {
+      const data = collectFormData();
+      if (!data) { showError('Fill in all fields first, then click Compare All.'); return; }
+      clearError();
+
+      // Show table with pending rows immediately
+      if (clusterCompareWrap) clusterCompareWrap.removeAttribute('hidden');
+      if (clusterCompareTbody) {
+        clusterCompareTbody.innerHTML = ALL_CLUSTERING_MODELS.map(m =>
+          `<tr id="ctr-${m.key}">
+            <td>${m.label}</td>
+            <td style="color:var(--color-text-faint)">…</td>
+            <td style="color:var(--color-text-faint)">Pending</td>
+          </tr>`
+        ).join('');
+      }
+
+      // Fire all requests in parallel
+      const requests = ALL_CLUSTERING_MODELS.map(m =>
+        fetch(`${API_BASE}/analyze/clusters?model_name=${encodeURIComponent(m.key)}`, {
+          method : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body   : JSON.stringify(data),
+        })
+        .then(async r => {
+          const json = await r.json().catch(() => ({}));
+          if (!r.ok) throw json;
+          return json;
+        })
+        .then(json => ({ model: m, result: json, ok: true }))
+        .catch(err => ({ model: m, error: err, ok: false }))
+      );
+
+      const results = await Promise.allSettled(requests);
+
+      results.forEach(settled => {
+        const item = settled.value || settled.reason;
+        const row  = document.getElementById(`ctr-${item.model.key}`);
+        if (!row) return;
+
+        if (!item.ok || !item.result || item.result.cluster_assignment == null) {
+          // Check if it's the 501 error for predict not supported
+          let errText = 'API error';
+          if (item.error && item.error.detail) errText = 'Not supported for new points';
+          row.cells[1].textContent = 'Error';
+          row.cells[1].style.color = '#f87171';
+          row.cells[2].textContent = errText;
+          return;
+        }
+
+        const clusterId = item.result.cluster_assignment;
+        const silScore = item.result.silhouette_score != null ? item.result.silhouette_score.toFixed(3) : 'N/A';
+        row.cells[1].innerHTML =
+          `<strong style="color:var(--color-text)">Cluster ${clusterId}</strong> <span style="color:var(--color-text-faint);font-size:0.75rem">(${item.result.cluster_name})</span>`;
+        row.cells[2].textContent = silScore;
+      });
+
+      setTimeout(() => {
+        if (clusterCompareWrap) clusterCompareWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    });
+  }
 
 })();

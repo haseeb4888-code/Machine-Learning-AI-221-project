@@ -294,32 +294,62 @@ def list_models():
 
 
 @app.post("/predict/gdp", response_model=PredictionResponse, tags=["Predictions"])
-def predict_gdp(features: CountryFeatures):
-    """Predict GDP value using best regression model"""
+def predict_gdp(
+    features: CountryFeatures,
+    model_name: str = Query(
+        default=None,
+        description="Regressor to use. Options: linear_regression, random_forest, gradient_boosting, xgboost, svm, mlp. Defaults to best model from training."
+    )
+):
+    """Predict GDP value using a chosen or best regression model"""
     try:
-        best_reg_model = pipeline_metrics['best_regression_model']
-        
-        if best_reg_model == 'N/A' or best_reg_model not in regression_models:
-            raise HTTPException(status_code=503, detail="No regression model available. Run training pipeline first.")
-        
-        # Prepare feature array with engineered features (17 raw + 6 engineered = 24 total)
+        # Determine which model to use
+        if model_name and model_name in regression_models:
+            chosen_model_key = model_name
+        else:
+            chosen_model_key = pipeline_metrics['best_regression_model']
+
+        if chosen_model_key == 'N/A' or chosen_model_key not in regression_models:
+            raise HTTPException(
+                status_code=503,
+                detail=f"Model '{chosen_model_key}' not loaded. Available: {list(regression_models.keys())}"
+            )
+
+        # Prepare feature array with engineered features (18 raw + 6 engineered = 24 total)
         feature_values = engineer_features_for_prediction(features)
-        
-        model = regression_models[best_reg_model]
+
+        model = regression_models[chosen_model_key]
         prediction = model.predict(feature_values)[0]
-        
+
         return PredictionResponse(
             predicted_value=float(prediction),
             confidence=pipeline_metrics['best_regression_r2'],
-            model_used=f"{best_reg_model.replace('_', ' ').title()} Regressor",
+            model_used=f"{chosen_model_key.replace('_', ' ').title()} Regressor",
             input_features=features.dict()
         )
-    
+
     except HTTPException:
         raise
     except Exception as e:
         print(f"Error in predict_gdp: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+
+
+@app.get("/models/regression", tags=["Models"])
+def list_regression_models():
+    """List all available regression models"""
+    models_info = {}
+    for model_key in regression_models:
+        models_info[model_key] = {
+            "display_name": model_key.replace('_', ' ').title(),
+            "available": True,
+        }
+    return {
+        "available_models": models_info,
+        "best_model": pipeline_metrics['best_regression_model'],
+        "best_r2": pipeline_metrics['best_regression_r2'],
+        "best_rmse": pipeline_metrics['best_regression_rmse'],
+    }
 
 
 @app.post("/predict/gdp-category", response_model=PredictionResponse, tags=["Predictions"])
@@ -386,28 +416,49 @@ def list_classification_models():
 # NEW: CLUSTERING ENDPOINTS BELOW
 
 @app.post("/analyze/clusters", response_model=ClusteringResponse, tags=["Clustering"])
-def analyze_country_cluster(features: CountryFeatures):
+def analyze_country_cluster(
+    features: CountryFeatures,
+    model_name: str = Query(
+        default="kmeans",
+        description="Clustering algorithm to use. Options: kmeans, hierarchical, dbscan. Defaults to kmeans."
+    )
+):
     """
-    Analyze which cluster a country belongs to using KMeans clustering
+    Analyze which cluster a country belongs to using a specified clustering model
     """
     try:
-        if 'kmeans' not in clustering_models:
-            raise HTTPException(status_code=503, detail="Clustering model not loaded")
+        if model_name not in clustering_models:
+            raise HTTPException(
+                status_code=503, 
+                detail=f"Clustering model '{model_name}' not loaded. Available: {list(clustering_models.keys())}"
+            )
         
-        # Prepare feature array with engineered features (17 raw + 6 engineered = 23 total)
+        # Prepare feature array with engineered features (18 raw + 6 engineered = 24 total)
         feature_values = engineer_features_for_prediction(features)
         
-        model = clustering_models['kmeans']
-        cluster_id = model.predict(feature_values)[0]
+        model = clustering_models[model_name]
+        
+        # Determine cluster ID based on the model type
+        if hasattr(model, 'predict'):
+            cluster_id = model.predict(feature_values)[0]
+        else:
+            # DBSCAN and AgglomerativeClustering don't have predict, they only fit_predict on training data.
+            # But sklearn Agglomerative/DBSCAN don't easily assign new points.
+            # Wait, how was predict called before?
+            raise HTTPException(status_code=501, detail=f"Model {model_name} does not support predicting new samples directly.")
         
         # Get cluster name
-        cluster_name = CLUSTER_NAMES.get(cluster_id, f"Cluster {cluster_id}")
+        cluster_name = CLUSTER_NAMES.get(int(cluster_id), f"Cluster {cluster_id}")
         
+        model_display = model_name.title() + " Clustering" if model_name != "dbscan" else "DBSCAN Clustering"
+        if model_name == 'kmeans':
+            model_display = "KMeans Clustering"
+            
         return ClusteringResponse(
             cluster_assignment=int(cluster_id),
             cluster_name=cluster_name,
-            model_used="KMeans Clustering",
-            silhouette_score=clustering_metrics_data['kmeans'].get('silhouette_score', 0.0),
+            model_used=model_display,
+            silhouette_score=clustering_metrics_data.get(model_name, {}).get('silhouette_score', 0.0),
             input_features=features.dict()
         )
     
@@ -416,6 +467,20 @@ def analyze_country_cluster(features: CountryFeatures):
     except Exception as e:
         print(f"Error in analyze_country_cluster: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Clustering analysis failed: {str(e)}")
+
+@app.get("/models/clustering", tags=["Models"])
+def list_clustering_models():
+    """List all available clustering models"""
+    models_info = {}
+    for model_key in clustering_models:
+        models_info[model_key] = {
+            "display_name": model_key.title() if model_key != "dbscan" else "DBSCAN",
+            "available": True,
+        }
+    return {
+        "available_models": models_info
+    }
+
 
 
 @app.get("/analyze/clusters/summary", response_model=ClusterAnalysisResponse, tags=["Clustering"])
