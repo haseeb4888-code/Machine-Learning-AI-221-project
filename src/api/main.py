@@ -10,7 +10,7 @@ from pathlib import Path
 import traceback
 from typing import Dict, Any
 
-from src.api.schemas import (
+from schemas import (
     CountryFeatures,
     PredictionResponse,
     HealthResponse,
@@ -24,7 +24,9 @@ app = FastAPI(
     description="ML-powered economic analysis and prediction platform",
     version="1.0.0"
 )
+from fastapi.staticfiles import StaticFiles
 
+app.mount("/frontend", StaticFiles(directory="frontend", html=True), name="frontend")
 # Model storage
 regression_models = {}
 classification_models = {}
@@ -34,7 +36,16 @@ model_metadata = {
     'clustering_models_loaded': 0,  # NEW: Track clustering models
     'last_updated': None
 }
+# main.py
+from fastapi.middleware.cors import CORSMiddleware
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],   # for local testing
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # Performance metrics from pipeline execution
 pipeline_metrics = {
     'best_regression_r2': 0.0,
