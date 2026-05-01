@@ -1,0 +1,23 @@
+.git/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+htmlcov/
+.tox/
+.venv/
+venv/
+ENV/
+env/
+.vscode/
+.idea/
+*.log
+
+# Ignore notebooks (optional)
+*.ipynb
+.ipynb_checkpoints/
+
+# Keep dataset + models in build context
+!countries of the world.csv
+!Old-Version/
+!Old-Version/countries of the world.csv
+!models/

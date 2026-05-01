@@ -271,6 +271,11 @@
                        placeholder="e.g. 163.07" min="0" step="0.01" required />
               </div>
               <div class="form-group">
+                <label class="form-label" for="gdp_per_capita">Current GDP per Capita ($)</label>
+                <input class="form-input" type="number" id="gdp_per_capita" name="gdp_per_capita"
+                       placeholder="e.g. 700" min="0" step="0.01" required />
+              </div>
+              <div class="form-group">
                 <label class="form-label" for="climate">Climate Zone (1–5)</label>
                 <input class="form-input" type="number" id="climate" name="climate"
                        placeholder="e.g. 1" min="1" max="5" step="0.5" required />
@@ -334,6 +339,25 @@
               <input class="form-input" type="number" id="service" name="service"
                      placeholder="e.g. 0.38" min="0" max="1" step="0.01" required />
             </div>
+          </div>
+
+          <!-- Region (required by API schema) -->
+          <div class="form-group">
+            <label class="form-label" for="region">Region</label>
+            <select class="form-input form-select" id="region" name="region" required>
+              <option value="" disabled selected>Select a region…</option>
+              <option>ASIA (EX. NEAR EAST)</option>
+              <option>BALTICS</option>
+              <option>C.W. OF IND. STATES</option>
+              <option>EASTERN EUROPE</option>
+              <option>LATIN AMER. &amp; CARIB</option>
+              <option>NEAR EAST</option>
+              <option>NORTHERN AFRICA</option>
+              <option>NORTHERN AMERICA</option>
+              <option>OCEANIA</option>
+              <option>SUB-SAHARAN AFRICA</option>
+              <option>WESTERN EUROPE</option>
+            </select>
           </div>
 
           <!-- Error message -->
@@ -418,6 +442,50 @@
           </button>
         </div>
 
+        <!-- Model selector pills -->
+        <div class="model-selector" id="classifyModelSelector" role="group"
+             aria-label="Choose classification model">
+          <span class="model-selector__label">Model:</span>
+          <div class="model-pills" id="classifyModelPills">
+            <button type="button" class="model-pill model-pill--active"
+                    data-model="best" id="mpill-best">⭐ Best</button>
+            <button type="button" class="model-pill"
+                    data-model="random_forest" id="mpill-rf">Random Forest</button>
+            <button type="button" class="model-pill"
+                    data-model="logistic_regression" id="mpill-lr">Logistic Regression</button>
+            <button type="button" class="model-pill"
+                    data-model="knn" id="mpill-knn">KNN</button>
+            <button type="button" class="model-pill"
+                    data-model="xgboost" id="mpill-xgb">XGBoost</button>
+            <button type="button" class="model-pill"
+                    data-model="svm" id="mpill-svm">SVM</button>
+            <button type="button" class="model-pill"
+                    data-model="gaussian_naive_bayes" id="mpill-gnb">Naive Bayes</button>
+            <button type="button" class="model-pill"
+                    data-model="mlp" id="mpill-mlp">MLP</button>
+          </div>
+          <button type="button" class="btn btn--secondary btn--sm" id="compareAllBtn">
+            Compare All ▶
+          </button>
+        </div>
+
+        <!-- Compare-all results table (hidden until Compare All is clicked) -->
+        <div class="compare-table-wrap" id="compareTableWrap" hidden>
+          <p class="compare-table-wrap__title">All Models — Comparison</p>
+          <table class="compare-table" id="compareTable">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Prediction</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="compareTableBody">
+              <!-- Rows injected by JS -->
+            </tbody>
+          </table>
+        </div>
+
         <form id="classifyForm" class="predictor-form" novalidate>
 
           <!-- Same two-column grid as the GDP predictor -->
@@ -452,6 +520,11 @@
                 <label class="form-label" for="c-infant_mortality">Infant Mortality (per 1000)</label>
                 <input class="form-input" type="number" id="c-infant_mortality" name="infant_mortality"
                        placeholder="e.g. 163.07" min="0" step="0.01" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="c-gdp_per_capita">Current GDP per Capita ($)</label>
+                <input class="form-input" type="number" id="c-gdp_per_capita" name="gdp_per_capita"
+                       placeholder="e.g. 700" min="0" step="0.01" required />
               </div>
               <div class="form-group">
                 <label class="form-label" for="c-climate">Climate Zone (1–5)</label>
@@ -518,6 +591,25 @@
             </div>
           </div>
 
+          <!-- Region (required by API schema) -->
+          <div class="form-group">
+            <label class="form-label" for="c-region">Region</label>
+            <select class="form-input form-select" id="c-region" name="region" required>
+              <option value="" disabled selected>Select a region…</option>
+              <option>ASIA (EX. NEAR EAST)</option>
+              <option>BALTICS</option>
+              <option>C.W. OF IND. STATES</option>
+              <option>EASTERN EUROPE</option>
+              <option>LATIN AMER. &amp; CARIB</option>
+              <option>NEAR EAST</option>
+              <option>NORTHERN AFRICA</option>
+              <option>NORTHERN AMERICA</option>
+              <option>OCEANIA</option>
+              <option>SUB-SAHARAN AFRICA</option>
+              <option>WESTERN EUROPE</option>
+            </select>
+          </div>
+
           <p class="form-error" id="classifyFormError" role="alert" aria-live="polite"></p>
 
           <button type="submit" class="btn btn--primary btn--lg" id="classifySubmitBtn">
@@ -566,13 +658,281 @@
 
     </section><!-- /classify -->
 
-    <section id="insights" class="placeholder-section">
-      <h2>Model Insights</h2>
-      <p>Coming soon…</p>
-    </section>
+    <!-- =================================================
+         SECTION 4 — MODEL INSIGHTS (Clustering)
+         ================================================= -->
+    <section id="insights" class="insights-section" aria-labelledby="insightsTitle">
+
+      <!-- Section header -->
+      <div class="section-header">
+        <div class="section-tag">Unsupervised Learning</div>
+        <h2 class="section-title" id="insightsTitle">Country Cluster Analysis</h2>
+        <p class="section-subtitle">
+          Discover which economic cluster a country belongs to using
+          <strong>KMeans clustering</strong>. Countries are grouped into
+          Developing, Emerging, and Developed economy tiers.
+        </p>
+      </div>
+
+      <!-- ── Cluster stats bar (loaded on page load) ── -->
+      <div class="cluster-stats-bar" id="clusterStatsBar">
+        <div class="cluster-stat-item" id="cs-clusters">
+          <span class="cluster-stat-item__value">—</span>
+          <span class="cluster-stat-item__label">Clusters</span>
+        </div>
+        <div class="cluster-stat-divider"></div>
+        <div class="cluster-stat-item" id="cs-silhouette">
+          <span class="cluster-stat-item__value">—</span>
+          <span class="cluster-stat-item__label">Silhouette Score</span>
+        </div>
+        <div class="cluster-stat-divider"></div>
+        <div class="cluster-stat-item" id="cs-davies">
+          <span class="cluster-stat-item__value">—</span>
+          <span class="cluster-stat-item__label">Davies-Bouldin Score</span>
+        </div>
+        <div class="cluster-stat-divider"></div>
+        <div class="cluster-stat-item" id="cs-model">
+          <span class="cluster-stat-item__value">KMeans</span>
+          <span class="cluster-stat-item__label">Algorithm</span>
+        </div>
+      </div>
+
+      <!-- ── Cluster assignment form ── -->
+      <div class="predictor-card">
+
+        <!-- Autofill from predictor -->
+        <div class="autofill-banner">
+          <div class="autofill-banner__text">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M9 6v3l2 2" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round"/>
+            </svg>
+            Find a country's cluster assignment using the same indicators
+          </div>
+          <button type="button" class="btn btn--secondary btn--sm" id="clusterAutofillBtn">
+            Copy values from Predictor ↑
+          </button>
+        </div>
+
+        <form id="clusterForm" class="predictor-form" novalidate>
+
+          <div class="form-grid">
+            <!-- LEFT COLUMN -->
+            <div class="form-col">
+              <div class="form-group">
+                <label class="form-label" for="k-population">Population</label>
+                <input class="form-input" type="number" id="k-population" name="population"
+                       placeholder="e.g. 32900000" min="0" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="k-area">Area (sq. mi.)</label>
+                <input class="form-input" type="number" id="k-area" name="area"
+                       placeholder="e.g. 647500" min="0" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="k-pop_density">Pop. Density</label>
+                <input class="form-input" type="number" id="k-pop_density" name="pop_density"
+                       placeholder="e.g. 48.0" min="0" step="0.1" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="k-coastline">Coastline Ratio</label>
+                <input class="form-input" type="number" id="k-coastline" name="coastline"
+                       placeholder="e.g. 0.07" min="0" step="0.01" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="k-net_migration">Net Migration</label>
+                <input class="form-input" type="number" id="k-net_migration" name="net_migration"
+                       placeholder="e.g. 23.06" step="0.01" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="k-infant_mortality">Infant Mortality</label>
+                <input class="form-input" type="number" id="k-infant_mortality" name="infant_mortality"
+                       placeholder="e.g. 163.07" min="0" step="0.01" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="k-gdp_per_capita">GDP per Capita ($)</label>
+                <input class="form-input" type="number" id="k-gdp_per_capita" name="gdp_per_capita"
+                       placeholder="e.g. 700" min="0" step="0.01" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="k-climate">Climate Zone (1–5)</label>
+                <input class="form-input" type="number" id="k-climate" name="climate"
+                       placeholder="e.g. 1" min="1" max="5" step="0.5" required />
+              </div>
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div class="form-col">
+              <div class="form-group">
+                <label class="form-label" for="k-literacy">Literacy (%)</label>
+                <input class="form-input" type="number" id="k-literacy" name="literacy"
+                       placeholder="e.g. 36.0" min="0" max="100" step="0.1" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="k-phones_per_1000">Phones per 1000</label>
+                <input class="form-input" type="number" id="k-phones_per_1000" name="phones_per_1000"
+                       placeholder="e.g. 3.2" min="0" step="0.1" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="k-arable">Arable Land (%)</label>
+                <input class="form-input" type="number" id="k-arable" name="arable"
+                       placeholder="e.g. 12.13" min="0" max="100" step="0.01" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="k-crops">Crops (%)</label>
+                <input class="form-input" type="number" id="k-crops" name="crops"
+                       placeholder="e.g. 0.22" min="0" max="100" step="0.01" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="k-other">Other Land (%)</label>
+                <input class="form-input" type="number" id="k-other" name="other"
+                       placeholder="e.g. 87.65" min="0" max="100" step="0.01" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="k-birthrate">Birthrate</label>
+                <input class="form-input" type="number" id="k-birthrate" name="birthrate"
+                       placeholder="e.g. 46.6" min="0" step="0.1" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="k-deathrate">Deathrate</label>
+                <input class="form-input" type="number" id="k-deathrate" name="deathrate"
+                       placeholder="e.g. 20.34" min="0" step="0.01" required />
+              </div>
+            </div>
+          </div><!-- /form-grid -->
+
+          <div class="form-row-3">
+            <div class="form-group">
+              <label class="form-label" for="k-agriculture">Agriculture (%)</label>
+              <input class="form-input" type="number" id="k-agriculture" name="agriculture"
+                     placeholder="e.g. 0.38" min="0" max="1" step="0.01" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="k-industry">Industry (%)</label>
+              <input class="form-input" type="number" id="k-industry" name="industry"
+                     placeholder="e.g. 0.24" min="0" max="1" step="0.01" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="k-service">Service (%)</label>
+              <input class="form-input" type="number" id="k-service" name="service"
+                     placeholder="e.g. 0.38" min="0" max="1" step="0.01" required />
+            </div>
+          </div>
+
+          <!-- Region -->
+          <div class="form-group">
+            <label class="form-label" for="k-region">Region</label>
+            <select class="form-input form-select" id="k-region" name="region" required>
+              <option value="" disabled selected>Select a region…</option>
+              <option>ASIA (EX. NEAR EAST)</option>
+              <option>BALTICS</option>
+              <option>C.W. OF IND. STATES</option>
+              <option>EASTERN EUROPE</option>
+              <option>LATIN AMER. &amp; CARIB</option>
+              <option>NEAR EAST</option>
+              <option>NORTHERN AFRICA</option>
+              <option>NORTHERN AMERICA</option>
+              <option>OCEANIA</option>
+              <option>SUB-SAHARAN AFRICA</option>
+              <option>WESTERN EUROPE</option>
+            </select>
+          </div>
+
+          <p class="form-error" id="clusterFormError" role="alert" aria-live="polite"></p>
+
+          <button type="submit" class="btn btn--primary btn--lg" id="clusterSubmitBtn">
+            <span class="btn-label">Find My Cluster</span>
+            <span class="btn-spinner" aria-hidden="true"></span>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"
+                 aria-hidden="true" class="btn-icon">
+              <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="2"/>
+              <circle cx="9" cy="9" r="3" fill="currentColor"/>
+            </svg>
+          </button>
+
+        </form><!-- /clusterForm -->
+
+        <!-- Cluster result card -->
+        <div class="cluster-result-card" id="clusterResult" aria-live="polite" hidden>
+          <div class="cluster-result-card__header">
+            <div class="cluster-badge" id="clusterBadge">
+              <span class="cluster-badge__id" id="clusterIdEl">0</span>
+            </div>
+            <div>
+              <p class="result-card__label">Cluster Assignment</p>
+              <p class="cluster-result-card__name" id="clusterNameEl">Developing Economies</p>
+            </div>
+          </div>
+          <hr class="category-divider" />
+          <p class="category-explanation" id="clusterDescEl">
+            Countries grouped in this cluster share similar socioeconomic indicators.
+          </p>
+          <div class="cluster-result-card__meta">
+            <span id="clusterSilhouetteEl">Silhouette: —</span>
+            <span id="clusterModelEl">Model: KMeans</span>
+          </div>
+        </div>
+
+      </div><!-- /predictor-card -->
+
+    </section><!-- /insights -->
 
   </main>
 
   <script src="app.js"></script>
+
+  <!-- =====================================================
+       FOOTER
+       ===================================================== -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="site-footer__inner">
+
+      <!-- Separator line -->
+      <hr class="site-footer__rule" />
+
+      <div class="site-footer__body">
+
+        <!-- Left: branding + course -->
+        <div class="site-footer__brand">
+          <span class="site-footer__logo">Econ<span class="navbar__logo-accent">AI</span></span>
+          <span class="site-footer__course">AI-221 · Machine Learning Project</span>
+        </div>
+
+        <!-- Centre: team members -->
+        <ul class="site-footer__team" role="list" aria-label="Team members">
+          <li class="site-footer__team-label">Team</li>
+          <li>Haseeb</li>
+          <li>Member 2</li>
+          <li>Member 3</li>
+        </ul>
+
+        <!-- Right: GitHub link -->
+        <a href="https://github.com/haseeb4888/Machine-Learning-AI-221-project"
+           class="site-footer__github"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="View source on GitHub">
+          <!-- GitHub SVG icon -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839
+            9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608
+            1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951
+            0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004
+            1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688
+            0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019
+            10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          View on GitHub
+        </a>
+
+      </div><!-- /body -->
+
+      <p class="site-footer__copy">
+        © 2024 EconAI · Built for AI-221 · Powered by FastAPI &amp; Scikit-Learn
+      </p>
+
+    </div><!-- /inner -->
+  </footer>
 </body>
 </html>
