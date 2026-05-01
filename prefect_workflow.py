@@ -17,7 +17,6 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Tuple, List
-
 import pandas as pd
 from prefect import flow, task
 from prefect.context import get_run_context
@@ -454,15 +453,15 @@ def run_deepchecks_task(split_data: Dict) -> Dict:
     
     try:
         # Try to import deepchecks
-        try:
-            import pandas as pd
-            from deepchecks.tabular import Dataset
-            from deepchecks.tabular.suites import train_test_validation
-        except ImportError:
-            logger.warning("⚠️  DeepChecks not installed. Skipping DeepChecks validation.")
-            deepchecks_results['status'] = 'SKIPPED'
-            deepchecks_results['reason'] = 'DeepChecks package not installed'
-            return deepchecks_results
+        import pandas as pd
+        from deepchecks.tabular import Dataset
+        from deepchecks.tabular.suites import train_test_validation
+        DEEPCHECKS_AVAILABLE = True
+    except ImportError as e:
+        logger.warning(f"⚠️  DeepChecks not available: {e}")
+        deepchecks_results['status'] = 'SKIPPED'
+        deepchecks_results['reason'] = f'DeepChecks import failed: {e}'
+        return deepchecks_results
         
         # Get data from split_data
         X_train = split_data.get('X_train')
@@ -514,6 +513,53 @@ def run_deepchecks_task(split_data: Dict) -> Dict:
     return deepchecks_results
 
 
+@task(name="Run Data Validation Tests", retries=0)
+def run_data_validation_tests_task() -> Dict:
+    """
+    Run comprehensive data validation tests before training pipeline.
+    This is a CRITICAL quality gate - failing validation stops the pipeline.
+    
+    Tests check:
+    - Data file existence and readability
+    - Correct columns are present
+    - Data types are correct
+    - Data cleaning operations work
+    - No unexpected duplicates
+    - Missing values within limits
+    """
+    logger = get_run_logger()
+    logger.info("\n" + "=" * 70)
+    logger.info("✅ STAGE: DATA VALIDATION TESTS")
+    logger.info("=" * 70)
+    
+    cmd = ["pytest", "-v", "--tb=short", "tests/test_data_loader.py"]
+    logger.info(f"Running: {' '.join(cmd)}\n")
+    
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    
+    # Log output
+    if proc.stdout:
+        logger.info(f"Data validation output:\n{proc.stdout}")
+    if proc.stderr and proc.returncode != 0:
+        logger.error(f"Data validation stderr:\n{proc.stderr}")
+    
+    if proc.returncode != 0:
+        logger.error(f"❌ Data validation tests FAILED with exit code {proc.returncode}")
+        raise RuntimeError(
+            "Data validation tests failed - pipeline cannot proceed. "
+            "Check data file, columns, and data integrity."
+        )
+    
+    logger.info("✅ All DATA VALIDATION TESTS PASSED - Data is ready for training")
+    logger.info("=" * 70)
+    return {
+        "pytest_returncode": proc.returncode,
+        "test_file": "tests/test_data_loader.py",
+        "status": "PASSED",
+        "message": "Data validation successful - data is ready for training"
+    }
+
+
 @task(name="Run pytest quality gate", retries=0)
 def run_pytest_quality_gate(test_paths: List[str] | None = None) -> Dict:
     """Run the repository pytest suite (or selected files) as a Prefect quality gate.
@@ -527,6 +573,7 @@ def run_pytest_quality_gate(test_paths: List[str] | None = None) -> Dict:
 
     if not test_paths:
         test_paths = [
+            "tests/test_data_loader.py",
             "tests/test_models.py",
             "tests/test_ml_validation.py",
             "tests/test_api.py",
@@ -578,8 +625,14 @@ def ml_training_flow(
     logger.info(f"🚀 Starting ML Training Pipeline - Run ID: {context.flow_run.id}")
     logger.info("=" * 70)
     
-    # Steps 1-4: Same as before
+    # STEP 1: Load and Preprocess Data
     df, df_processed = load_preprocess_task(data_path)
+    
+    # STEP 2: RUN DATA VALIDATION TESTS (CRITICAL QUALITY GATE)
+    # Must pass before proceeding with training
+    data_validation_results = run_data_validation_tests_task()
+    
+    # STEP 3-5: Feature Engineering and Target Variable
     df_engineered = engineer_features_task(df)
     df_with_target = create_target_task(df_engineered)
     split_data = prepare_split_task(df_with_target)
@@ -646,6 +699,10 @@ def ml_training_flow(
 
     if tuned_params:
         summary['tuned_params'] = tuned_params
+    
+    # Add data validation results to summary
+    if data_validation_results:
+        summary['data_validation_results'] = data_validation_results
     
     # Add validation results to summary
     if validation_results:
