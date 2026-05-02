@@ -107,7 +107,7 @@ def create_target_task(df: pd.DataFrame) -> pd.DataFrame:
     pipeline.df = df
     df_with_target = pipeline.create_target_variable()
     
-    logger.info(f"✓ Target variable created with categories")
+    logger.info("✓ Target variable created with categories")
     return df_with_target
 
 
@@ -287,7 +287,7 @@ def save_results_task(summary: Dict, output_dir: str = 'results') -> str:
     with open(file_path, 'w') as f:
         json.dump(summary, f, indent=4)
         
-    logger.info(f"✓ Pipeline execution results saved to: {file_path}")
+    logger.info("✓ Pipeline execution results saved to: {file_path}")
     return str(file_path)
 
 
@@ -458,7 +458,6 @@ def run_deepchecks_task(split_data: Dict) -> Dict:
         import pandas as pd
         from deepchecks.tabular import Dataset
         from deepchecks.tabular.suites import train_test_validation
-        DEEPCHECKS_AVAILABLE = True
     except ImportError as e:
         logger.warning(f"⚠️  DeepChecks not available: {e}")
         deepchecks_results['status'] = 'SKIPPED'
@@ -480,7 +479,7 @@ def run_deepchecks_task(split_data: Dict) -> Dict:
         # Create feature names
         feature_names = [f"feature_{i}" for i in range(X_train.shape[1])]
         
-        logger.info(f"Running train-test validation suite on {X_train.shape[0]} train, {X_test.shape[0]} test samples...")
+        logger.info("Running train-test validation suite on {X_train.shape[0]} train, {X_test.shape[0]} test samples...")
         
         # Create DeepChecks datasets
         train_ds = Dataset(
@@ -727,7 +726,7 @@ def ml_training_flow(
     logger.info("\n" + "=" * 70)
     logger.info("✅ ML TRAINING PIPELINE COMPLETED SUCCESSFULLY!")
     logger.info("=" * 70)
-    logger.info(f"Pipeline Status: SUCCESS")
+    logger.info("Pipeline Status: SUCCESS")
     logger.info(f"Results saved to: {saved_file_path}")
     logger.info("=" * 70)
     

@@ -153,6 +153,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Train / bake models
+        run: |
+          python scripts/bake_models.py
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:

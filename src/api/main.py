@@ -1,6 +1,6 @@
 """FastAPI application for Economic Growth Analyzer"""
 
-from fastapi import FastAPI, HTTPException, File, UploadFile, Query
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
 import pickle
 import json
@@ -144,10 +144,10 @@ def extract_best_metrics(pipeline_data: Dict[str, Any]) -> None:
         # Store metrics for all clustering models
         for model_name, metrics in clust_metrics.items():
             clustering_metrics_data[model_name] = metrics
-        print(f"✓ Clustering metrics loaded for all models")
+        print("✓ Clustering metrics loaded for all models")
     
     pipeline_metrics['timestamp'] = pipeline_data.get('timestamp', 'N/A')
-    print(f"✓ Metrics extracted from pipeline execution")
+    print("✓ Metrics extracted from pipeline execution")
 
 
 def engineer_features_for_prediction(features: CountryFeatures) -> np.ndarray:

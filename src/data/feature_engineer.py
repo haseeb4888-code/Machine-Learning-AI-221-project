@@ -1,6 +1,5 @@
 """Feature engineering module for creating derived features"""
 
-import pandas as pd
 import numpy as np
 
 
