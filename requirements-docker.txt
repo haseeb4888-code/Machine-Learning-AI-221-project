@@ -9,6 +9,9 @@ numpy==1.24.0
 scikit-learn==1.3.0
 joblib==1.3.0
 pandas==2.0.0
+# Required because bake_models imports model modules that import xgboost/optuna at module import-time
+optuna==3.4.0
+xgboost==2.0.0
 
 python-dotenv==1.0.0
 requests==2.31.0
