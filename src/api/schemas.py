@@ -1,7 +1,7 @@
 """Pydantic schemas for API request/response validation"""
 
 from pydantic import BaseModel
-from typing import Optional, List, Dict
+from typing import Optional, Dict
 
 
 class CountryFeatures(BaseModel):

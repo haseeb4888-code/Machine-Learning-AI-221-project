@@ -10,7 +10,7 @@ from pathlib import Path
 import traceback
 from typing import Dict, Any
 
-from schemas import (
+from .schemas import (
     CountryFeatures,
     PredictionResponse,
     HealthResponse,
