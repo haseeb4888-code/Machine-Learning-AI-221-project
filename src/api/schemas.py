@@ -1,6 +1,6 @@
 """Pydantic schemas for API request/response validation"""
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, Dict
 
 
@@ -29,6 +29,8 @@ class CountryFeatures(BaseModel):
 
 class PredictionResponse(BaseModel):
     """API response for predictions"""
+    model_config = ConfigDict(protected_namespaces=())
+
     predicted_value: Optional[float] = None
     predicted_category: Optional[str] = None
     confidence: float
@@ -38,6 +40,8 @@ class PredictionResponse(BaseModel):
 
 class ClusteringResponse(BaseModel):
     """API response for clustering analysis"""
+    model_config = ConfigDict(protected_namespaces=())
+
     cluster_assignment: int  # Which cluster (0, 1, 2, etc.)
     cluster_name: str  # Descriptive name
     model_used: str  # Which clustering algorithm
@@ -48,6 +52,8 @@ class ClusteringResponse(BaseModel):
 
 class ClusterAnalysisResponse(BaseModel):
     """Cluster analysis and characteristics"""
+    model_config = ConfigDict(protected_namespaces=())
+
     model_used: str
     n_clusters: int
     silhouette_score: float
