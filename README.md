@@ -1,5 +1,5 @@
 ---
-title: Machine Learning AI-221 Project
+title: Machine Learning AI-221 Project1
 sdk: docker
 app_port: 8000
 ---
