@@ -2,13 +2,13 @@
 
 from fastapi import FastAPI, HTTPException, File, UploadFile, Query
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse
 import pickle
 import json
 import numpy as np
 from pathlib import Path
 import traceback
 from typing import Dict, Any
+from fastapi.middleware.cors import CORSMiddleware
 
 from .schemas import (
     CountryFeatures,
@@ -24,7 +24,6 @@ app = FastAPI(
     description="ML-powered economic analysis and prediction platform",
     version="1.0.0"
 )
-from fastapi.staticfiles import StaticFiles
 
 app.mount("/frontend", StaticFiles(directory="frontend", html=True), name="frontend")
 # Model storage
@@ -37,7 +36,6 @@ model_metadata = {
     'last_updated': None
 }
 # main.py
-from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,

@@ -130,8 +130,8 @@ jobs:
         run: |
           python -c "
           try:
-              import endpoints
-              print('endpoints.py imported OK')
+              from src.api import main
+              print('src.api.main imported OK')
           except Exception as e:
               print(f'Import warning: {e}')
           "
@@ -176,7 +176,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          dockerfile: Dockerfile
+          file: Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

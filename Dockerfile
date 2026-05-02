@@ -37,10 +37,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /install /usr/local
 
 # ── Copy your actual project files ───────────────────────────
-COPY endpoints.py ./endpoints.py
 COPY ["countries of the world.csv", "./countries of the world.csv"]
 COPY models/ ./models/
-COPY code.ipynb ./code.ipynb
+COPY src/ ./src/
+COPY frontend/ ./frontend/
+COPY results/ ./results/
 
 # ── Security: non-root user ───────────────────────────────────
 RUN groupadd -r appuser && \
@@ -54,4 +55,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-CMD ["uvicorn", "endpoints:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
