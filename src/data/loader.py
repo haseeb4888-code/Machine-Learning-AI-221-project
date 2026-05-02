@@ -68,14 +68,14 @@ class DataLoader:
     def display_info(self, df):
         """Print dataset info"""
         print(f"\n📊 Dataset Shape: {df.shape}")
-        print(f"\n🔍 Data Types and Missing Values:")
+        print("\n🔍 Data Types and Missing Values:")
         df.info()
-        print(f"\n📈 Statistical Summary:")
+        print("\n📈 Statistical Summary:")
         print(df.describe())
         
         missing_df = self.get_missing_values_summary(df)
         if len(missing_df) > 0:
-            print(f"\n⚠️  Missing Values:")
+            print("\n⚠️  Missing Values:")
             print(missing_df)
         else:
             print("\n✓ No missing values found!")

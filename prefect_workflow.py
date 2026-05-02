@@ -287,7 +287,7 @@ def save_results_task(summary: Dict, output_dir: str = 'results') -> str:
     with open(file_path, 'w') as f:
         json.dump(summary, f, indent=4)
         
-    logger.info("✓ Pipeline execution results saved to: {file_path}")
+    logger.info(f"✓ Pipeline execution results saved to: {file_path}")
     return str(file_path)
 
 
@@ -479,7 +479,7 @@ def run_deepchecks_task(split_data: Dict) -> Dict:
         # Create feature names
         feature_names = [f"feature_{i}" for i in range(X_train.shape[1])]
         
-        logger.info("Running train-test validation suite on {X_train.shape[0]} train, {X_test.shape[0]} test samples...")
+        logger.info(f"Running train-test validation suite on {X_train.shape[0]} train, {X_test.shape[0]} test samples...")
         
         # Create DeepChecks datasets
         train_ds = Dataset(

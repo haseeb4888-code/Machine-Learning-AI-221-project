@@ -101,6 +101,6 @@ if __name__ == "__main__":
     
     preprocessor = DataPreprocessor()
     df_processed, df_original = preprocessor.preprocess(df)
-    print(f"\n✓ Preprocessing complete!")
+    print("\n✓ Preprocessing complete!")
     print(f"Original shape: {df_original.shape}")
     print(f"Processed shape: {df_processed.shape}")

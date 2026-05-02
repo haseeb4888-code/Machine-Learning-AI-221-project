@@ -1,11 +1,9 @@
 """Classification models for GDP category prediction"""
 
 import pickle
-import numpy as np
 from pathlib import Path
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
@@ -13,7 +11,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import xgboost as xgb
-import pandas as pd
 
 
 class ClassificationModelManager:

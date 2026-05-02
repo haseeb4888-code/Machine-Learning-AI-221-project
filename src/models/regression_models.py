@@ -10,7 +10,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 import xgboost as xgb
-import pandas as pd
 
 
 class RegressionModelManager:

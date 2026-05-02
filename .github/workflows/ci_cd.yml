@@ -166,7 +166,7 @@ jobs:
 
       - name: Train / bake models
         run: |
-          python scripts/bake_models.py
+          PYTHONPATH=. python scripts/bake_models.py
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
