@@ -38,7 +38,10 @@ jobs:
 
   deploy_huggingface:
     name: Deploy to Hugging Face Space
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    # Run deploy on:
+    # - real pushes to main
+    # - manual workflow_dispatch runs on main (so "Re-run jobs" can deploy)
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
     needs: docker
     uses: ./.github/workflows/deploy_huggingface.yml
     secrets: inherit
