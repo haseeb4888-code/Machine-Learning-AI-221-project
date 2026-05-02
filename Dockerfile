@@ -17,7 +17,7 @@ COPY . .
 
 # Pre-train and bake required models into the image so deployments (e.g. Hugging Face)
 # have models available even without a host-mounted ./models directory.
-RUN python -m pip install --no-cache-dir --retries 10 --timeout 120 pandas==2.0.0 \
+RUN python -m pip install --no-cache-dir --retries 10 --timeout 120 pandas==2.0.0 xgboost==2.0.0 optuna==3.4.0 \
 	&& python scripts/bake_models.py
 
 EXPOSE 8000
