@@ -45,4 +45,7 @@ jobs:
           git remote add hf "${HF_REMOTE}"
 
           # Deploy current commit to the Space's main branch.
-          git push hf HEAD:main
+          # If the Space has commits we don't have locally, normal push fails (non-fast-forward).
+          # Force-with-lease overwrites only if the remote hasn't changed unexpectedly.
+          git fetch hf main --quiet
+          git push hf HEAD:main --force-with-lease
