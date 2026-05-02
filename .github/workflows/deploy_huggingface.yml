@@ -29,6 +29,9 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Avoid "shallow update not allowed" during push to Hugging Face
+          fetch-depth: 0
 
       - name: Push to Hugging Face (Spaces)
         env:
