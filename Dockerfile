@@ -1,28 +1,57 @@
-FROM python:3.10-slim
+# ============================================================
+# Economic Growth Analyzer — Dockerfile (Fixed)
+# Matches actual repo: endpoints.py + models/ + CSV dataset
+# ============================================================
+
+# ── Stage 1: Builder (install heavy deps) ────────────────────
+FROM python:3.11-slim AS builder
+
+WORKDIR /build
+
+# System build tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    libgomp1 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install dependencies (cached as its own layer)
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+# ── Stage 2: Production (lean final image) ───────────────────
+FROM python:3.11-slim AS production
 
 WORKDIR /app
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-		PYTHONUNBUFFERED=1 \
-	PYTHONPATH=/app \
-	PIP_DISABLE_PIP_VERSION_CHECK=1 \
-	PIP_DEFAULT_TIMEOUT=120 \
-	PIP_PROGRESS_BAR=off
+# Only runtime libs needed
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY requirements-docker.txt ./requirements-docker.txt
-RUN python -m pip install --upgrade pip \
-	&& pip install --no-cache-dir --retries 10 --timeout 120 -r requirements-docker.txt
+# Copy installed Python packages from builder
+COPY --from=builder /install /usr/local
 
-COPY . .
+# ── Copy your actual project files ───────────────────────────
+COPY endpoints.py ./endpoints.py
+COPY ["countries of the world.csv", "./countries of the world.csv"]
+COPY models/ ./models/
+COPY code.ipynb ./code.ipynb
 
-# Pre-train and bake required models into the image so deployments (e.g. Hugging Face)
-# have models available even without a host-mounted ./models directory.
-RUN python -m pip install --no-cache-dir --retries 10 --timeout 120 pandas==2.0.0 xgboost==2.0.0 optuna==3.4.0 \
-	&& python scripts/bake_models.py
+# ── Security: non-root user ───────────────────────────────────
+RUN groupadd -r appuser && \
+    useradd -r -g appuser appuser && \
+    chown -R appuser:appuser /app
+USER appuser
 
+# ── Runtime config ────────────────────────────────────────────
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-	CMD python -c "import requests; r=requests.get('http://localhost:8000/health', timeout=5); r.raise_for_status()"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "endpoints:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
