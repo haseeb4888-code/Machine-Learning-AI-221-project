@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import pickle
 import json
 import numpy as np
@@ -255,14 +256,32 @@ def load_models():
 app.add_event_handler("startup", load_models)
 
 
-@app.get("/", tags=["Health"])
+@app.get("/", include_in_schema=False)
 def root():
-    """Root endpoint"""
+    """Serve frontend entrypoint"""
+    return FileResponse("frontend/index.html")
+
+
+@app.get("/api", tags=["Health"])
+def api_root():
+    """API root endpoint"""
     return {
         "message": "Economic Growth Analyzer API",
         "docs": "/docs",
         "version": "1.0.0"
     }
+
+
+@app.get("/styles.css", include_in_schema=False)
+def styles_css():
+    """Serve frontend stylesheet"""
+    return FileResponse("frontend/styles.css")
+
+
+@app.get("/app.js", include_in_schema=False)
+def app_js():
+    """Serve frontend JavaScript"""
+    return FileResponse("frontend/app.js")
 
 
 @app.get("/health", response_model=HealthResponse, tags=["Health"])

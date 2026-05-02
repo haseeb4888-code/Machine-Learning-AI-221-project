@@ -11,8 +11,15 @@ class TestHealthEndpoints:
     """Test health check and status endpoints"""
     
     def test_root_endpoint(self):
-        """Test root endpoint returns correct response"""
+        """Test root endpoint serves frontend HTML"""
         response = client.get("/")
+        assert response.status_code == 200
+        assert "text/html" in response.headers.get("content-type", "")
+        assert "<!DOCTYPE html>" in response.text
+
+    def test_api_root_endpoint(self):
+        """Test API root endpoint returns metadata JSON"""
+        response = client.get("/api")
         assert response.status_code == 200
         data = response.json()
         assert "message" in data
