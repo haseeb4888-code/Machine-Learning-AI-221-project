@@ -386,21 +386,105 @@ The container startup command uses dynamic port binding so it works correctly on
 
 ## Prefect Workflow
 
-The Prefect workflow is defined in [prefect_workflow.py](prefect_workflow.py).
+The Prefect workflow is defined in [prefect_workflow.py](prefect_workflow.py). It is the end-to-end training and validation pipeline that turns the raw dataset into deployable model artifacts and a reproducible results summary.
 
-### Purpose
+### Workflow Architecture
 
-The workflow automates the full training process:
+```mermaid
+flowchart TD
+	classDef source fill:#0f172a,stroke:#38bdf8,color:#e2e8f0,stroke-width:1px;
+	classDef process fill:#082f49,stroke:#22d3ee,color:#e0f2fe,stroke-width:1px;
+	classDef model fill:#1e293b,stroke:#60a5fa,color:#f8fafc,stroke-width:1px;
+	classDef gate fill:#3b0764,stroke:#c084fc,color:#faf5ff,stroke-width:1px;
+	classDef output fill:#064e3b,stroke:#34d399,color:#ecfdf5,stroke-width:1px;
 
-- Load data
-- Preprocess the dataset
-- Engineer features
-- Create target variables
-- Split data into training and test sets
-- Train classification models
-- Train regression models
-- Validate results
-- Write pipeline summaries
+	subgraph S1[1. Data Ingestion]
+		A1[(countries of the world.csv)]:::source
+		A2[Load raw rows]:::process
+		A3[Initial cleaning and type normalization]:::process
+		A1 --> A2 --> A3
+	end
+
+	subgraph S2[2. Feature Pipeline]
+		B1[Preprocess missing values]:::process
+		B2[Engineer derived features]:::process
+		B3[Create target variables]:::process
+		B4[Prepare train/test split]:::process
+		A3 --> B1 --> B2 --> B3 --> B4
+	end
+
+	subgraph S3[3. Parallel Model Training]
+		C1[Classification branch]:::model
+		C2[Regression branch]:::model
+		C3[Clustering branch]:::model
+
+		C1a[Train logistic regression]:::model
+		C1b[Train random forest classifier]:::model
+		C1c[Train KNN / XGBoost / SVM / MLP]:::model
+		C1 --> C1a --> C1b --> C1c
+
+		C2a[Train linear regression]:::model
+		C2b[Train random forest regressor]:::model
+		C2c[Train gradient boosting / XGBoost / SVM / MLP]:::model
+		C2 --> C2a --> C2b --> C2c
+
+		C3a[Fit K-Means]:::model
+		C3b[Fit hierarchical clustering]:::model
+		C3c[Fit DBSCAN]:::model
+		C3 --> C3a --> C3b --> C3c
+	end
+
+	subgraph S4[4. Validation and Quality Gates]
+		D1[Collect metrics]:::gate
+		D2[Compare against thresholds]:::gate
+		D3{All gates pass?}:::gate
+		D4[DeepChecks validation]:::gate
+		D5[Pytest execution]:::gate
+		D1 --> D2 --> D3
+		D2 --> D4 --> D5
+	end
+
+	subgraph S5[5. Persistence and Serving]
+		E1[Save models to models directories]:::output
+		E2[Write pipeline_summary_TIMESTAMP.json]:::output
+		E3[API startup loads latest artifacts]:::output
+		E4[Frontend and API become available]:::output
+		E5[Deployment ready for HF / container hosting]:::output
+		E1 --> E2 --> E3 --> E4 --> E5
+	end
+
+	B4 --> C1
+	B4 --> C2
+	B4 --> C3
+
+	C1c --> D1
+	C2c --> D1
+	C3c --> D1
+
+	D3 -- Yes --> E1
+	D3 -- No --> F1[Stop pipeline and report failure]:::gate
+
+	style S1 fill:#020617,stroke:#38bdf8,stroke-width:1px
+	style S2 fill:#020617,stroke:#38bdf8,stroke-width:1px
+	style S3 fill:#020617,stroke:#38bdf8,stroke-width:1px
+	style S4 fill:#020617,stroke:#38bdf8,stroke-width:1px
+	style S5 fill:#020617,stroke:#38bdf8,stroke-width:1px
+```
+
+### Pipeline Stages
+
+1. Load the dataset from the repository root.
+2. Clean, normalize, and preprocess the country records.
+3. Engineer the derived features that improve model expressiveness.
+4. Split the dataset into training and test sets.
+5. Train classification, regression, and clustering model families in parallel.
+6. Collect metrics and apply the quality gates.
+7. Stop immediately if the quality threshold fails.
+8. Save trained models and the latest pipeline summary when the run succeeds.
+
+### Why this matters
+
+The workflow provides a reproducible training path, which is important if you want to regenerate models or compare future improvements against the current baseline. The diagram also shows where validation happens, where artifacts are saved, and how the API consumes the outputs later.
 
 ### How to run
 
@@ -414,10 +498,6 @@ python prefect_workflow.py
 - Logs describing training progress
 - Performance metrics for the best classification, regression, and clustering models
 - Validation output for data quality and quality gates
-
-### Why this matters
-
-The workflow provides a reproducible training path, which is important if you want to regenerate models or compare future improvements against the current baseline.
 
 ## Testing and Validation
 
