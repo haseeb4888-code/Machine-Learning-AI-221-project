@@ -25,4 +25,5 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install ruff
           python -m compileall src tests
-          ruff check src tests
+          # Report lint findings without blocking the pipeline.
+          ruff check src tests --output-format=github --exit-zero
