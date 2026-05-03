@@ -11,7 +11,7 @@ import traceback
 from typing import Dict, Any
 from fastapi.middleware.cors import CORSMiddleware
 
-from .schemas import (
+from schemas import (
     CountryFeatures,
     PredictionResponse,
     HealthResponse,
@@ -55,7 +55,7 @@ pipeline_metrics = {
     'best_classification_model': 'N/A',
     'best_clustering_model': 'N/A',
     'timestamp': None,
-    'total_countries': 195,
+    'total_countries': 223,
     'total_features': 25
 }
 
